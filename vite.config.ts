@@ -1,44 +1,9 @@
-import { createReadStream, statSync } from "node:fs";
-import { join, resolve } from "node:path";
-import type { Connect } from "vite";
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig } from "vite";
 
 /**
- * Demo server (`yarn demo`). The page loads the model from `./model/`, which this config serves from `MODEL_DIR`
- * (default: the repository's exported run, `training/outputs/e5-small/onnx`). A built demo (`yarn demo:build`, in
- * `demo-dist/`) needs the model next to it at `model/` or a `?model=<url>` query parameter.
+ * Demo (`yarn demo`, `yarn demo:build` into `demo-dist/`). The page loads the package's own model (`model/`), which the
+ * build emits as assets; `?model=<url>` loads another copy.
  */
-const MODEL_DIR = resolve(process.env.MODEL_DIR ?? join(import.meta.dirname, "../../training/outputs/e5-small/onnx"));
-const MODEL_FILES: Record<string, string> = {
-  "classifier.json": "application/json",
-  "tokenizer.json": "application/json",
-  "tokenizer_config.json": "application/json",
-  "model.onnx": "application/octet-stream",
-  "model_int8.onnx": "application/octet-stream",
-};
-
-/** Mounted at `/model/`, so `request.url` is the file name. */
-const serveModel: Connect.NextHandleFunction = (request, response, next) => {
-  const file = new URL(request.url ?? "/", "http://localhost").pathname.slice(1);
-  const type = MODEL_FILES[file];
-  if (type === undefined) return next();
-  try {
-    const { size } = statSync(join(MODEL_DIR, file));
-    response.writeHead(200, { "Content-Type": type, "Content-Length": size, "Cache-Control": "no-cache" });
-    createReadStream(join(MODEL_DIR, file)).pipe(response);
-  } catch {
-    response.statusCode = 404;
-    response.end(`${file} not found in ${MODEL_DIR}`);
-  }
-};
-
-function modelDirectory(): Plugin {
-  return {
-    name: "serve-model-directory",
-    configureServer: server => void server.middlewares.use("/model/", serveModel),
-    configurePreviewServer: server => void server.middlewares.use("/model/", serveModel),
-  };
-}
 
 // Cross-origin isolation lets ONNX Runtime use WebAssembly threads; `credentialless` still loads GitHub avatars.
 const isolation = { "Cross-Origin-Opener-Policy": "same-origin", "Cross-Origin-Embedder-Policy": "credentialless" };
@@ -46,9 +11,9 @@ const isolation = { "Cross-Origin-Opener-Policy": "same-origin", "Cross-Origin-E
 export default defineConfig({
   root: "demo",
   base: "./",
-  plugins: [modelDirectory()],
   server: { headers: isolation },
   preview: { headers: isolation },
+  // Not pre-bundled: ONNX Runtime finds its files with `new URL(…, import.meta.url)` next to its module.
   optimizeDeps: { exclude: ["onnxruntime-web"] },
   build: {
     outDir: "../demo-dist",

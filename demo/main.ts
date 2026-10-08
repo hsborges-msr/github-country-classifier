@@ -5,10 +5,11 @@ import { createGitHubClient, RateLimitError, type RateLimit } from "./github.js"
 import { createWorldMap, type WorldMap } from "./map.js";
 import { addActivity, countryOf, describeActivity, newActors, nextProfileLimit, PROFILE_LIMIT, summarize, tallyCountries, type ActivityState, type ActorResult } from "./state.js";
 
-// `?model=<url>` points at an exported model directory, `?onnx=model.onnx` picks the fp32 file.
+// The bundled model by default; `?model=<url>` points at another exported model directory, `?onnx=model.onnx` picks its fp32 file.
 const params = new URLSearchParams(location.search);
-const MODEL_URL = params.get("model") ?? "./model/";
+const MODEL_URL = params.get("model") ?? undefined;
 const ONNX_FILE = params.get("onnx") ?? "model_int8.onnx";
+const MODEL_NAME = MODEL_URL === undefined ? "bundled int8 model" : `${MODEL_URL} ${ONNX_FILE}`;
 const TOKEN_KEY = "github-country-classifier:token";
 const MAX_LISTED_USERS = 200;
 /** Profile lookups in flight; Octokit's throttling also caps concurrent requests and paces secondary limits. */
@@ -79,12 +80,12 @@ function showProgress(progress: LoadProgress) {
 const classifierPromise = loadCountryClassifier(MODEL_URL, { onnxFile: ONNX_FILE, onProgress: showProgress }).then(
   classifier => {
     ui.modelProgress.hidden = true;
-    ui.modelStatus.textContent = `Model ready · ${classifier.config.labels.length} countries · ${ONNX_FILE}`;
+    ui.modelStatus.textContent = `Model ready · ${classifier.config.labels.length} countries · ${MODEL_NAME}`;
     return classifier;
   },
   (error: unknown) => {
     ui.modelProgress.hidden = true;
-    ui.modelStatus.textContent = `Model failed to load from ${MODEL_URL}: ${error instanceof Error ? error.message : String(error)}`;
+    ui.modelStatus.textContent = `Model failed to load (${MODEL_NAME}): ${error instanceof Error ? error.message : String(error)}`;
     ui.modelStatus.classList.add("error");
     throw error;
   },

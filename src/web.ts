@@ -1,5 +1,5 @@
 import type { InferenceSession } from "onnxruntime-web";
-import { createClassifierFromArtifacts, type CountryClassifier, type RunLogits } from "./classifier.js";
+import { createClassifierFromArtifacts, type CountryClassifier, type ModelFiles, type RunLogits } from "./classifier.js";
 
 export * from "./index.js";
 
@@ -77,32 +77,47 @@ async function readBody(response: Response, file: string, onProgress: LoadCountr
   return bytes;
 }
 
+async function bundledModelFiles(): Promise<ModelFiles> {
+  return (await import("./model.js")).bundledModelFiles;
+}
+
+function modelFilesAt(baseUrl: string | URL, onnxFile: string): ModelFiles {
+  const base = resolveBase(baseUrl);
+  const at = (file: string) => new URL(file, base);
+  return { config: at("classifier.json"), tokenizer: at("tokenizer.json"), tokenizerConfig: at("tokenizer_config.json"), model: at(onnxFile) };
+}
+
+const isModelFiles = (source: string | URL | ModelFiles): source is ModelFiles => typeof source === "object" && !(source instanceof URL);
+
 /**
- * Load an exported model directory served at `baseUrl` (`classifier.json`, `tokenizer.json`, `tokenizer_config.json`
- * and the ONNX file) and run it with `onnxruntime-web`, which is imported here. Files are kept in the Cache API, so later visits skip the download.
+ * Load a model and run it with `onnxruntime-web`, which is imported here. Without `source`, the model in this package
+ * (int8, trimmed vocabulary) is used; your bundler emits its files as assets.
+ * A URL is an exported model directory (`classifier.json`, `tokenizer.json`, `tokenizer_config.json` and `onnxFile`);
+ * {@link ModelFiles} names each file. Files are kept in the Cache API, so later visits skip the download.
  */
-export async function loadCountryClassifier(baseUrl: string | URL, options: LoadCountryClassifierOptions = {}): Promise<CountryClassifier> {
+export async function loadCountryClassifier(source?: string | URL | ModelFiles, options: LoadCountryClassifierOptions = {}): Promise<CountryClassifier> {
   const { onnxFile = "model_int8.onnx", threshold, batchSize = 1, cache: cacheName = DEFAULT_CACHE, onProgress, wasmPaths, executionProviders = ["wasm"] } = options;
   const fetchFile = options.fetch ?? globalThis.fetch.bind(globalThis);
   // Imported here so bundlers emit ONNX Runtime as its own chunk: its WebAssembly threads start workers from the URL
   // of the script that contains it, which must not be the page's own script.
   const ort = await import("onnxruntime-web");
   if (wasmPaths !== undefined) ort.env.wasm.wasmPaths = wasmPaths;
-  const base = resolveBase(baseUrl);
+  const files = source === undefined ? await bundledModelFiles() : isModelFiles(source) ? source : modelFilesAt(source, onnxFile);
   const cache = await openCache(cacheName);
 
-  const download = async (file: string): Promise<Uint8Array> => {
-    const url = new URL(file, base).href;
+  const download = async (file: string | URL): Promise<Uint8Array> => {
+    const url = new URL(file, globalThis.location?.href).href;
+    const name = new URL(url).pathname.split("/").at(-1) ?? url;
     const cached = await cache?.match(url);
-    if (cached !== undefined) return readBody(cached, file, onProgress);
+    if (cached !== undefined) return readBody(cached, name, onProgress);
     const response = await fetchFile(url);
     if (!response.ok) throw new Error(`could not download ${url}: HTTP ${response.status}`);
     if (cache !== null) await cache.put(url, response.clone()).catch(() => undefined);
-    return readBody(response, file, onProgress);
+    return readBody(response, name, onProgress);
   };
-  const json = async (file: string): Promise<unknown> => JSON.parse(new TextDecoder().decode(await download(file)));
+  const json = async (file: string | URL): Promise<unknown> => JSON.parse(new TextDecoder().decode(await download(file)));
 
-  const [config, tokenizerJson, tokenizerConfig, model] = await Promise.all([json("classifier.json"), json("tokenizer.json"), json("tokenizer_config.json"), download(onnxFile)]);
+  const [config, tokenizerJson, tokenizerConfig, model] = await Promise.all([json(files.config), json(files.tokenizer), json(files.tokenizerConfig), download(files.model)]);
   const session = await ort.InferenceSession.create(model, { executionProviders });
   const run: RunLogits = async (inputIds, attentionMask, batchSize, sequenceLength) => {
     const dims = [batchSize, sequenceLength];

@@ -100,6 +100,14 @@ export function createCountryClassifier(options: CountryClassifierOptions): Clas
   };
 }
 
+/** Where a model's files are: paths or URLs of `classifier.json`, `tokenizer.json`, `tokenizer_config.json` and the ONNX file. */
+export interface ModelFiles {
+  config: string | URL;
+  tokenizer: string | URL;
+  tokenizerConfig: string | URL;
+  model: string | URL;
+}
+
 /** A ready classifier and the config it was built from. */
 export interface CountryClassifier {
   config: ClassifierConfig;

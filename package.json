@@ -1,13 +1,28 @@
 {
   "name": "@hsborges/github-country-classifier",
   "version": "0.1.0",
-  "description": "Infer the country of a GitHub profile from its public fields (multilingual-e5-small, ONNX), in Node or in the browser",
+  "description": "Infer the country of a GitHub user from the public fields of their profile, in Node or in the browser (multilingual-e5-small, ONNX), with the model included",
   "license": "MIT",
+  "author": "Hudson Borges",
+  "homepage": "https://github.com/hsborges/github-location-inference/tree/master/packages/country-classifier#readme",
+  "bugs": {
+    "url": "https://github.com/hsborges/github-location-inference/issues"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/hsborges/github-location-inference.git",
+    "url": "git+https://github.com/hsborges/github-location-inference.git",
     "directory": "packages/country-classifier"
   },
+  "keywords": [
+    "github",
+    "country",
+    "location",
+    "geolocation",
+    "classifier",
+    "onnx",
+    "onnxruntime",
+    "browser"
+  ],
   "type": "module",
   "engines": {
     "node": ">=20.17.0"
@@ -25,10 +40,12 @@
     "./web": {
       "types": "./dist/web.d.ts",
       "default": "./dist/web.js"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "dist",
+    "model",
     "!dist/**/*.spec.*"
   ],
   "scripts": {
@@ -37,13 +54,12 @@
     "test": "vitest run",
     "demo": "vite",
     "demo:build": "vite build",
-    "demo:preview": "vite preview"
+    "demo:preview": "vite preview",
+    "prepack": "yarn build",
+    "smoke:pack": "sh scripts/smoke-pack.sh"
   },
   "dependencies": {
     "@huggingface/tokenizers": "^0.2.0",
-    "@octokit/plugin-retry": "^8.1.1",
-    "@octokit/plugin-throttling": "^11.0.5",
-    "onnxruntime-node": "1.30.0",
     "zod": "^4.6.5"
   },
   "peerDependencies": {
@@ -60,6 +76,8 @@
   },
   "devDependencies": {
     "@octokit/core": "^7.0.8",
+    "@octokit/plugin-retry": "^8.1.1",
+    "@octokit/plugin-throttling": "^11.0.5",
     "@octokit/request-error": "^7.1.2",
     "@types/d3-geo": "^3.1.1",
     "@types/geojson": "^7946.0.16",
@@ -67,6 +85,7 @@
     "@types/topojson-client": "^3.1.5",
     "d3-geo": "^3.1.1",
     "i18n-iso-countries": "^7.14.0",
+    "onnxruntime-node": "1.30.0",
     "onnxruntime-web": "1.30.0",
     "shx": "^0.4.0",
     "topojson-client": "^3.1.0",

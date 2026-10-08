@@ -49,6 +49,28 @@ test.skipIf(!HAS_MODEL)("concurrent calls answer as sequential ones", async () =
   expect(concurrent).toEqual(sequential);
 });
 
+/** Serves `file:` URLs, which Node's fetch does not. */
+const fetchFileUrls = vi.fn(async (input: RequestInfo | URL) => new Response(await readFile(new URL(input instanceof Request ? input.url : input))));
+
+test("loads the bundled model by default, which agrees with the Python evaluation on confident answers", async () => {
+  const { config, classify } = await loadCountryClassifier(undefined, { cache: false, fetch: fetchFileUrls });
+  expect(fetchFileUrls.mock.calls.map(([url]) => String(url).split("/").at(-1)).sort()).toEqual(["classifier.json", "model_int8.onnx", "tokenizer.json", "tokenizer_config.json"]);
+  expect(config.labels).toContain("BR");
+  const cases = (await readParityCases()).filter(item => item.confidence > 0.9);
+  const predictions = await classify(cases.map(item => item.text));
+  expect(predictions.map(prediction => prediction.top[0]?.[0])).toEqual(cases.map(item => item.country_code));
+});
+
+test.skipIf(!HAS_MODEL)("loads explicit model files", async () => {
+  const file = (name: string) => new URL(name, `file://${MODEL_DIR}`);
+  const { classify } = await loadCountryClassifier(
+    { config: file("classifier.json"), tokenizer: file("tokenizer.json"), tokenizerConfig: file("tokenizer_config.json"), model: file("model.onnx") },
+    { cache: false, fetch: fetchFileUrls },
+  );
+  const [first] = await readParityCases();
+  expect((await classify([first?.text ?? ""]))[0]?.confidence).toBeCloseTo(first?.confidence ?? Number.NaN, 3);
+});
+
 test("a missing file fails with its URL", async () => {
   const fetch = vi.fn(async () => new Response(null, { status: 404 }));
   await expect(loadCountryClassifier("https://models.test/none/", { cache: false, fetch })).rejects.toThrow(/could not download https:\/\/models\.test\/none\/\S+: HTTP 404/);

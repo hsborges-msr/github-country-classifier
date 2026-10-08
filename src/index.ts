@@ -9,6 +9,7 @@ export {
   type CountryClassifierOptions,
   type CountryPrediction,
   type EncodedBatch,
+  type ModelFiles,
   type RunLogits,
   type TokenizerLike,
 } from "./classifier.js";
