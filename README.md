@@ -13,6 +13,8 @@ offline, in Node or in the browser.**
 **[Try the live demo →](https://hsborges-msr.github.io/github-country-classifier/)** It reads GitHub's latest public
 events, classifies each author in your browser and puts them on a world map.
 
+<a href="https://hsborges-msr.github.io/github-country-classifier/"><img src="docs/demo.png" width="800" alt="The live demo after one refresh: a world map shaded by the number of users per country, a ranking led by the United States, Germany and India, and totals for all 86 classified users and for the 23 placed at 95% confidence or more"></a>
+
 </div>
 
 Only about one in four active GitHub users fills in the `location` field (26% in our sample of 1.97M), and when they
