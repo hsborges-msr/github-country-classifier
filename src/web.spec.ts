@@ -71,6 +71,16 @@ test.skipIf(!HAS_MODEL)("loads explicit model files", async () => {
   expect((await classify([first?.text ?? ""]))[0]?.confidence).toBeCloseTo(first?.confidence ?? Number.NaN, 3);
 });
 
+test("progress ignores the Content-Length of a compressed response, which counts compressed bytes", async () => {
+  const progress = vi.fn();
+  // Fetch has already decompressed the body, so more bytes arrive than Content-Length announces.
+  const fetch = vi.fn(async () => new Response("x".repeat(100), { headers: { "content-encoding": "gzip", "content-length": "10" } }));
+  await loadCountryClassifier("https://models.test/e5/", { cache: false, fetch, onProgress: progress }).catch(() => undefined);
+  const classifierProgress = progress.mock.calls.map(([event]) => event).filter(event => event.file === "classifier.json");
+  expect(classifierProgress.at(-1)).toEqual({ file: "classifier.json", loaded: 100, total: 100 });
+  expect(classifierProgress.slice(0, -1).every(event => event.total === null)).toBe(true);
+});
+
 test("a missing file fails with its URL", async () => {
   const fetch = vi.fn(async () => new Response(null, { status: 404 }));
   await expect(loadCountryClassifier("https://models.test/none/", { cache: false, fetch })).rejects.toThrow(/could not download https:\/\/models\.test\/none\/\S+: HTTP 404/);

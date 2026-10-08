@@ -1,0 +1,47 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "GitHub Country Classifier: Inferring a Developer's Country from Public GitHub Profiles"
+abstract: >-
+  A fine-tuned multilingual-e5-small classifier that infers the country (ISO 3166-1 alpha-2, 209 classes) of a GitHub
+  user from the public fields of their profile (location, company, blog, email domain, Twitter handle, bio), shipped as
+  a 45 MB int8 ONNX model with a trimmed vocabulary that runs locally in Node.js or the browser. Trained on 394,221
+  users whose declared locations were geocoded with Nominatim; 98.8% accuracy on 46,518 held-out users with a
+  location and 89.1% on 2,922 users without one, labelled by a large language model with grounded evidence.
+authors:
+  - family-names: Borges
+    given-names: Hudson Silva
+    email: hudsonsilbor@gmail.com
+repository-code: "https://github.com/hsborges-msr/github-country-classifier"
+url: "https://hsborges-msr.github.io/github-country-classifier/"
+license: MIT
+version: 0.1.0
+date-released: "2026-10-08"
+keywords:
+  - GitHub
+  - mining software repositories
+  - geolocation
+  - country inference
+  - text classification
+  - multilingual
+  - ONNX
+references:
+  - type: article
+    title: "Multilingual E5 Text Embeddings: A Technical Report"
+    authors:
+      - family-names: Wang
+        given-names: Liang
+      - family-names: Yang
+        given-names: Nan
+      - family-names: Huang
+        given-names: Xiaolong
+      - family-names: Yang
+        given-names: Linjun
+      - family-names: Majumder
+        given-names: Rangan
+      - family-names: Wei
+        given-names: Furu
+    year: 2024
+    identifiers:
+      - type: other
+        value: "arXiv:2402.05672"

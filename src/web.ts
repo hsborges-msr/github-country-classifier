@@ -50,7 +50,9 @@ async function openCache(name: string | false): Promise<Cache | null> {
 }
 
 async function readBody(response: Response, file: string, onProgress: LoadCountryClassifierOptions["onProgress"]): Promise<Uint8Array> {
-  const length = Number(response.headers.get("content-length"));
+  // A compressed response's Content-Length counts compressed bytes, while the body arrives decompressed.
+  const encoding = response.headers.get("content-encoding");
+  const length = encoding && encoding !== "identity" ? Number.NaN : Number(response.headers.get("content-length"));
   const total = Number.isFinite(length) && length > 0 ? length : null;
   if (response.body === null || onProgress === undefined) {
     const bytes = new Uint8Array(await response.arrayBuffer());
