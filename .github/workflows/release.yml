@@ -14,11 +14,11 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           lfs: true
       # Node 22 for the development tools (Octokit, used by the demo, needs it); the package itself supports >=20.17.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: yarn
@@ -38,6 +38,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          tarball=$(npm pack --silent)
+          # prepack (yarn build) prints to stdout, so take the file name from the directory, not from npm's output.
+          npm pack >/dev/null
+          tarball=$(ls hsborges-msr-github-country-classifier-*.tgz)
           gh release create "${GITHUB_REF_NAME}" "${tarball}" --title "${GITHUB_REF_NAME}" \
             --notes "Install: \`npm install https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/${tarball}\` plus \`onnxruntime-node\` or \`onnxruntime-web\`."

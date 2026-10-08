@@ -7,6 +7,9 @@ to call, and no profile text leaves the process or the browser tab.
 It reads only `location`, `company`, `blog`, the domain of the public `email`, `twitter_username` and `bio`, never the
 login or the name, and answers an ISO 3166-1 alpha-2 code (one of 209 countries) with a confidence.
 
+**[Live demo](https://hsborges-msr.github.io/github-country-classifier/):** classifies the authors of GitHub's latest
+public events in your browser and maps them.
+
 ## Install
 
 The package is distributed as a tarball attached to the
@@ -162,7 +165,8 @@ model, within or near the 95% confidence intervals (about ±0.1 and ±1.1 points
 
 ## Demo
 
-`demo/` (in this repository, not in the tarball) reads the latest
+`demo/` (in this repository, not in the tarball; published at
+<https://hsborges-msr.github.io/github-country-classifier/>) reads the latest
 [public GitHub events](https://docs.github.com/rest/activity/events#list-public-events), fetches each actor's profile,
 classifies it in the browser and plots the countries on a world map, with a refresh button, a minimum-confidence
 slider, event counts per user and an optional GitHub token (kept in `sessionStorage`; without one GitHub allows 60
@@ -180,6 +184,9 @@ yarn demo:build    # static site in demo-dist/, model included
 ```
 
 `?model=<url>` loads another exported model directory (CORS-enabled); `?onnx=model.onnx` selects its fp32 file.
+`.github/workflows/pages.yml` builds the demo and deploys it to GitHub Pages on every push to `main`. Pages cannot send
+the cross-origin isolation headers, so the published demo runs ONNX Runtime on one thread (`yarn demo` and
+`demo:preview` send them).
 
 ## Development
 
@@ -197,7 +204,7 @@ Clone with Git LFS installed (the model files are in LFS; otherwise run `git lfs
   `tokenizer_config.json` and `model_int8.onnx` into `model/`, update this README's numbers and bump the version.
 - **Releasing:** bump `version`, then push the tag `v<version>`. `.github/workflows/release.yml` tests the package,
   checks the packed tarball and attaches it to a GitHub release. `.github/workflows/ci.yml` runs the checks on every
-  push and pull request.
+  push and pull request, and `.github/workflows/pages.yml` publishes the demo.
 
 ## License
 
