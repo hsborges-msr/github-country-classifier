@@ -227,9 +227,9 @@
   "threshold": 0.0,
   "target_precision": 0.95,
   "vocabulary": {
-    "kept": 76156,
+    "kept": 57886,
     "of": 250037,
-    "min_count": 1,
+    "min_count": 2,
     "corpus": [
       "inputs-all.jsonl"
     ],

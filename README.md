@@ -1,7 +1,7 @@
 # @hsborges-msr/github-country-classifier
 
 Infer the country of a GitHub user from the public fields of their profile, in Node or in the browser. The package
-includes its model (a fine-tuned multilingual sentence encoder, 52 MB) and runs it locally with ONNX Runtime: no service
+includes its model (a fine-tuned multilingual sentence encoder, 45 MB) and runs it locally with ONNX Runtime: no service
 to call, and no profile text leaves the process or the browser tab.
 
 It reads only `location`, `company`, `blog`, the domain of the public `email`, `twitter_username` and `bio`, never the
@@ -20,7 +20,7 @@ npm install https://github.com/hsborges-msr/github-country-classifier/releases/d
 npm install https://github.com/hsborges-msr/github-country-classifier/releases/download/v0.1.0/hsborges-msr-github-country-classifier-0.1.0.tgz onnxruntime-web
 ```
 
-The tarball is about 37 MB (69 MB unpacked), almost all of it the model. ONNX Runtime is an optional peer dependency:
+The tarball is about 32 MB (62 MB unpacked), almost all of it the model. ONNX Runtime is an optional peer dependency:
 install the one for the entry you use.
 
 ## Usage
@@ -50,7 +50,7 @@ const [prediction] = await classify([describeCountryInput(profile)]);
 
 ### In the browser
 
-`loadCountryClassifier` from `/web` downloads the model once (about 69 MB, or less with HTTP compression) and keeps it
+`loadCountryClassifier` from `/web` downloads the model once (about 62 MB, or less with HTTP compression) and keeps it
 in the Cache API; `onProgress` reports the download. The model files are referenced with
 `new URL("…", import.meta.url)`, so your bundler emits them as assets (Vite and webpack 5 do).
 
@@ -122,12 +122,13 @@ in the Cache API; `onProgress` reports the download. The model files are referen
 1. **ONNX:** the fine-tuned network was exported with PyTorch's TorchScript exporter (opset 17) and checked against
    PyTorch on test texts.
 2. **Vocabulary trimming:** the base model has an embedding row for each of 250,037 token ids, 96M of its 118M
-   parameters. Only the tokens that occur in the model inputs of the 1,965,503 fetched profiles were kept: 76,156. The
-   tokenizer is unchanged; the graph starts with a lookup from each original id to its row in the smaller table, and ids
-   outside it read `<unk>`. On covered texts the trimmed network gives the full network's logits (largest difference
-   7.6e-6 over 256 test texts); the Good–Turing estimate of the share of tokens in new profiles never seen is 0.07%.
+   parameters. Only the tokens that occur at least twice in the model inputs of the 1,965,503 fetched profiles were
+   kept: 57,886. The tokenizer is unchanged; the graph starts with a lookup from each original id to its row in the
+   smaller table, and ids outside it read `<unk>`. On covered texts the trimmed network gives the full network's logits
+   (largest difference 7.6e-6 over 250 test texts); 6 of 256 test texts contained a dropped token. Keeping also the
+   tokens seen once (76,156) made no measurable difference in accuracy for 7 MB more.
 3. **int8:** ONNX Runtime's dynamic quantization (int8 weights, activations quantized at run time) took the trimmed
-   network from 205 MB to 52 MB, against 470 MB for the original fp32 export.
+   network from 176 MB to 45 MB, against 470 MB for the original fp32 export.
 
 ## Accuracy
 
@@ -135,13 +136,22 @@ Measured with ONNX Runtime, one profile per run, on the test split (users who de
 set (users who don't, but state a place elsewhere). "Always answering" counts the most probable country; the other
 columns count only answers at or above the minimum confidence.
 
-<!-- ACCURACY-TABLE -->
+| Data | Model | Always answering | ≥ 50% confidence | ≥ 90% | ≥ 95% |
+| --- | --- | --- | --- | --- | --- |
+| Test split (46,518 users with a location) | bundled int8 (45 MB) | 98.8% | 99.5% (99% answered) | 99.8% (98% answered) | 99.9% (97% answered) |
+| Test split (46,518 users with a location) | fp32 reference (470 MB) | 98.9% | 99.5% (99% answered) | 99.8% (98% answered) | 99.9% (98% answered) |
+| Teacher check set (2,922 users without one) | bundled int8 (45 MB) | 89.1% | 94.6% (90% answered) | 97.4% (79% answered) | 97.9% (73% answered) |
+| Teacher check set (2,922 users without one) | fp32 reference (470 MB) | 89.7% | 94.7% (92% answered) | 97.3% (81% answered) | 97.7% (77% answered) |
+
+The int8, trimmed model loses about 0.1 points on the test split and 0.6 on the teacher check set against the full fp32
+model, within or near the 95% confidence intervals (about ±0.1 and ±1.1 points).
 
 ## Limitations
 
-- **Calibrated on located users.** For users without a location the confidence is optimistic: a 95% minimum confidence
-  does not mean 95% precision on them. Most of them state no place at all (see the teacher check set), and a low
-  confidence is then the expected answer.
+- **Calibrated on located users.** The confidence was fitted on users who declare a location. On the teacher check set
+  it still holds (97.9% precision at 95% confidence), but that set covers only profiles that state a place somewhere;
+  most profiles without a location state none (2.9% of those sent to the teacher did), and on them precision at a given
+  confidence is unmeasured. For such profiles a low confidence is the expected answer.
 - **Inferred, not stated.** The model guesses from company names, email domains, languages and places in a bio. Use its
   answers for aggregate analyses (where a project's contributors are, say), not as facts about a person, and not to make
   decisions about individuals.
