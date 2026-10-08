@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GitHub country classifier · live demo</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>" />
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>Where are GitHub's active developers right now?</h1>
+        <p class="lead">
+          This page reads the latest <a href="https://docs.github.com/rest/activity/events#list-public-events">public GitHub events</a>, fetches each
+          actor's public profile and infers their country <strong>in your browser</strong> with
+          <code>@hsborges/github-country-classifier</code>. Only the GitHub API is contacted; profiles are never sent anywhere else.
+        </p>
+      </div>
+      <div class="status">
+        <span id="model-status">Loading model…</span>
+        <progress id="model-progress" max="1" value="0"></progress>
+        <span id="api-status">GitHub API: –</span>
+      </div>
+    </header>
+
+    <form id="toolbar" class="toolbar">
+      <button id="refresh" type="submit" class="primary">↻ Refresh</button>
+      <label>Profiles per refresh <input id="limit" type="number" min="1" max="100" value="20" /></label>
+      <label>
+        Minimum confidence <input id="confidence" type="range" min="0" max="0.99" step="0.01" value="0.95" />
+        <output id="confidence-value">95%</output>
+      </label>
+      <label>
+        GitHub token <input id="token" type="password" autocomplete="off" placeholder="optional, raises 60 → 5,000 requests/h" />
+      </label>
+      <button id="clear" type="button">Clear</button>
+      <span id="run-status" role="status"></span>
+    </form>
+
+    <main>
+      <section class="map-panel">
+        <svg id="map" role="img" aria-label="World map of classified users"></svg>
+        <div class="stats">
+          <section>
+            <h3>All classified users</h3>
+            <dl id="stats-all"></dl>
+          </section>
+          <section>
+            <h3 id="stats-threshold-title">At the minimum confidence</h3>
+            <dl id="stats-threshold"></dl>
+          </section>
+        </div>
+        <p id="summary" class="summary"></p>
+      </section>
+      <aside>
+        <h2>Countries</h2>
+        <ol id="ranking" class="ranking"></ol>
+      </aside>
+    </main>
+
+    <section class="users-panel">
+      <h2 id="users-title">Classified users</h2>
+      <ul id="users" class="users"></ul>
+    </section>
+
+    <footer>
+      The classifier reads only the profile's location, company, blog, email domain, Twitter handle and bio; it never reads the login or the
+      name. It was calibrated on users who declare a location, so answers for profiles without one are less reliable: treat each answer as an
+      estimate, useful in aggregate. Users below the minimum confidence, or whose profile has none of those fields, are shown as indeterminate.
+    </footer>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

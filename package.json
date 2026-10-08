@@ -1,0 +1,78 @@
+{
+  "name": "@hsborges/github-country-classifier",
+  "version": "0.1.0",
+  "description": "Infer the country of a GitHub profile from its public fields (multilingual-e5-small, ONNX), in Node or in the browser",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hsborges/github-location-inference.git",
+    "directory": "packages/country-classifier"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20.17.0"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "default": "./dist/node.js"
+    },
+    "./web": {
+      "types": "./dist/web.d.ts",
+      "default": "./dist/web.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.spec.*"
+  ],
+  "scripts": {
+    "build": "shx rm -rf dist && tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p demo/tsconfig.json",
+    "test": "vitest run",
+    "demo": "vite",
+    "demo:build": "vite build",
+    "demo:preview": "vite preview"
+  },
+  "dependencies": {
+    "@huggingface/tokenizers": "^0.2.0",
+    "@octokit/plugin-retry": "^8.1.1",
+    "@octokit/plugin-throttling": "^11.0.5",
+    "onnxruntime-node": "1.30.0",
+    "zod": "^4.6.5"
+  },
+  "peerDependencies": {
+    "onnxruntime-node": "^1.30.0",
+    "onnxruntime-web": "^1.30.0"
+  },
+  "peerDependenciesMeta": {
+    "onnxruntime-node": {
+      "optional": true
+    },
+    "onnxruntime-web": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@octokit/core": "^7.0.8",
+    "@octokit/request-error": "^7.1.2",
+    "@types/d3-geo": "^3.1.1",
+    "@types/geojson": "^7946.0.16",
+    "@types/node": "^26.6.3",
+    "@types/topojson-client": "^3.1.5",
+    "d3-geo": "^3.1.1",
+    "i18n-iso-countries": "^7.14.0",
+    "onnxruntime-web": "1.30.0",
+    "shx": "^0.4.0",
+    "topojson-client": "^3.1.0",
+    "typescript": "^7.0.2",
+    "vite": "^8",
+    "vitest": "^3.2.4",
+    "world-atlas": "^2.0.2"
+  }
+}
