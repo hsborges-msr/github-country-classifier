@@ -77,7 +77,7 @@ export interface CountryClassifierOptions {
 }
 
 /**
- * The inference rule of ADR 0008 over any runtime: empty texts are answered without the model, the others go through
+ * The inference rule (README, "How it works") over any runtime: empty texts are answered without the model, the others go through
  * the model in batches of at most `batchSize` and {@link predictFromLogits}.
  */
 export function createCountryClassifier(options: CountryClassifierOptions): ClassifyTexts {

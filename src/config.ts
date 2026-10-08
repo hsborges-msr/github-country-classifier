@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { COUNTRY_INPUT_FIELDS } from "./input.js";
 
-/** `classifier.json` of a trained model (ADR 0008); unknown keys are ignored. */
+/** `classifier.json` of a trained model (README, "How it works"); unknown keys are ignored. */
 const classifierConfigSchema = z.object({
   format: z.literal(1),
   base_model: z.string().min(1),

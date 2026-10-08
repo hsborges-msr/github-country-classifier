@@ -1,7 +1,7 @@
 import type { ModelFiles } from "./classifier.js";
 
 /**
- * The model shipped in this package's `model/` directory (int8, trimmed vocabulary; ADR 0019). The URLs are `file:` URLs
+ * The model shipped in this package's `model/` directory (int8, trimmed vocabulary; README, "Export"). The URLs are `file:` URLs
  * in Node and emitted assets after a bundler that understands `new URL("…", import.meta.url)` (Vite, webpack 5).
  */
 export const bundledModelFiles: ModelFiles = {

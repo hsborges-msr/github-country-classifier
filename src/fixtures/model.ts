@@ -2,11 +2,17 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
-/** The exported model of the repository's training run; the runtime tests are skipped when it is absent. */
+/**
+ * The full fp32 export of the training run, where this repository is checked out as `packages/country-classifier` of
+ * the study repository; the fp32 runtime tests are skipped when it is absent (as in a standalone checkout).
+ */
 export const MODEL_DIR = fileURLToPath(new URL("../../../../training/outputs/e5-small/onnx/", import.meta.url));
 export const HAS_MODEL = existsSync(`${MODEL_DIR}model.onnx`);
 
-/** Test texts with the predictions of the Python evaluation (`location_ft.evaluate --onnx model.onnx`). */
+/**
+ * Invented profile texts with the answers of the fp32 model run by the Python training code (ONNX Runtime): confident
+ * cases across countries and scripts, four without a place signal (low confidence) and one longer than the 96 tokens.
+ */
 export interface ParityCase {
   text: string;
   country_code: string;

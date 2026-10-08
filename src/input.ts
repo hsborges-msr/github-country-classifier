@@ -1,5 +1,5 @@
 /**
- * The profile fields the country classifier reads, in input order (ADR 0007). `email_domain` is derived from the public
+ * The profile fields the country classifier reads, in input order (README, "How it works"). `email_domain` is derived from the public
  * email; `login` and `name` are never read. Changing the fields or their order changes the model contract: export a new
  * dataset and retrain.
  */

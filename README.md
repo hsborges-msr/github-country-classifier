@@ -1,4 +1,4 @@
-# @hsborges/github-country-classifier
+# @hsborges-msr/github-country-classifier
 
 Infer the country of a GitHub user from the public fields of their profile, in Node or in the browser. The package
 includes its model (a fine-tuned multilingual sentence encoder, 52 MB) and runs it locally with ONNX Runtime: no service
@@ -10,14 +10,14 @@ login or the name, and answers an ISO 3166-1 alpha-2 code (one of 209 countries)
 ## Install
 
 The package is distributed as a tarball attached to the
-[GitHub releases](https://github.com/hsborges/github-location-inference/releases) of this repository (it is not on the
-npm registry). Install the tarball of a release together with the ONNX Runtime for your platform:
+[GitHub releases](https://github.com/hsborges-msr/github-country-classifier/releases) of this repository (it is not on
+the npm registry). Install the tarball of a release together with the ONNX Runtime for your platform:
 
 ```sh
 # Node
-npm install https://github.com/hsborges/github-location-inference/releases/download/country-classifier-v0.1.0/hsborges-github-country-classifier-0.1.0.tgz onnxruntime-node
+npm install https://github.com/hsborges-msr/github-country-classifier/releases/download/v0.1.0/hsborges-msr-github-country-classifier-0.1.0.tgz onnxruntime-node
 # browser (with a bundler)
-npm install https://github.com/hsborges/github-location-inference/releases/download/country-classifier-v0.1.0/hsborges-github-country-classifier-0.1.0.tgz onnxruntime-web
+npm install https://github.com/hsborges-msr/github-country-classifier/releases/download/v0.1.0/hsborges-msr-github-country-classifier-0.1.0.tgz onnxruntime-web
 ```
 
 The tarball is about 37 MB (69 MB unpacked), almost all of it the model. ONNX Runtime is an optional peer dependency:
@@ -26,7 +26,7 @@ install the one for the entry you use.
 ## Usage
 
 ```ts
-import { describeCountryInput, loadCountryClassifier } from "@hsborges/github-country-classifier/node"; // or "/web"
+import { describeCountryInput, loadCountryClassifier } from "@hsborges-msr/github-country-classifier/node"; // or "/web"
 
 const { classify } = await loadCountryClassifier();
 const profile = await (await fetch("https://api.github.com/users/octocat")).json();
@@ -44,7 +44,7 @@ const [prediction] = await classify([describeCountryInput(profile)]);
 - Another model: pass an exported model directory (Node) or its URL (browser) as the first argument (`classifier.json`,
   `tokenizer.json`, `tokenizer_config.json` and `{ onnxFile }`, default `model.onnx` in Node and `model_int8.onnx` in
   the browser), or a `ModelFiles` object with the path or URL of each file.
-- The core entry (`@hsborges/github-country-classifier`) has the parts that need no runtime: `describeCountryInput`,
+- The core entry (`@hsborges-msr/github-country-classifier`) has the parts that need no runtime: `describeCountryInput`,
   `createClassifierFromArtifacts` and `createCountryClassifier` (bring your own `RunLogits`), `predictFromLogits`,
   `parseClassifierConfig`.
 
@@ -56,7 +56,7 @@ in the Cache API; `onProgress` reports the download. The model files are referen
 
 - **Vite:** exclude `onnxruntime-web` from `optimizeDeps`. ONNX Runtime starts its WebAssembly threads as module workers
   of the chunk that contains it, so that chunk must not import your entry chunk; see this package's
-  [`vite.config.ts`](https://github.com/hsborges/github-location-inference/blob/master/packages/country-classifier/vite.config.ts).
+  [`vite.config.ts`](vite.config.ts).
 - **Threads** need a cross-origin-isolated page (`Cross-Origin-Opener-Policy: same-origin` and
   `Cross-Origin-Embedder-Policy: credentialless` or `require-corp`); without it ONNX Runtime runs single-threaded.
 - `wasmPaths` and `executionProviders` are passed to ONNX Runtime.
@@ -152,7 +152,7 @@ columns count only answers at or above the minimum confidence.
 
 ## Demo
 
-`demo/` (in the repository, not in the tarball) reads the latest
+`demo/` (in this repository, not in the tarball) reads the latest
 [public GitHub events](https://docs.github.com/rest/activity/events#list-public-events), fetches each actor's profile,
 classifies it in the browser and plots the countries on a world map, with a refresh button, a minimum-confidence
 slider, event counts per user and an optional GitHub token (kept in `sessionStorage`; without one GitHub allows 60
@@ -165,31 +165,31 @@ stops the refresh at once (in-flight lookups are aborted) instead of waiting up 
 picked up by the next refresh.
 
 ```sh
-yarn demo                                                        # from the repository root; http://localhost:5173
-yarn workspace @hsborges/github-country-classifier demo:build   # static site in demo-dist/, model included
+yarn demo          # http://localhost:5173
+yarn demo:build    # static site in demo-dist/, model included
 ```
 
 `?model=<url>` loads another exported model directory (CORS-enabled); `?onnx=model.onnx` selects its fp32 file.
 
 ## Development
 
-In the repository (the model files are in Git LFS: run `git lfs pull` after cloning):
+Clone with Git LFS installed (the model files are in LFS; otherwise run `git lfs pull`), then `yarn install`:
 
 - `yarn build` (ESM and declarations in `dist/`), `yarn typecheck`, `yarn test`. The tests compare the loaders with the
-  Python evaluation on `src/fixtures/parity.json`; the fp32 checks are skipped when `training/outputs/e5-small/onnx`
-  is absent.
+  Python runtime on invented profiles (`src/fixtures/parity.json`). The fp32 checks run only where this repository is
+  checked out inside the study repository (below), next to the full training export; elsewhere they are skipped.
 - `yarn smoke:pack` packs the package, installs the tarball into a new npm project and classifies a profile with both
   entries (needs the npm registry for ONNX Runtime).
-- **Updating the model:** export it with `python -m location_ft.export_onnx --trim-vocab …` (see `training/README.md`),
-  copy `classifier.json`, `tokenizer.json`, `tokenizer_config.json` and `model_int8.onnx` into `model/`, update this
-  README's numbers and bump the version.
-- **Releasing:** bump `version`, then push the tag `country-classifier-v<version>`.
-  `.github/workflows/release-country-classifier.yml` tests the package, checks the packed tarball and attaches it to a
-  GitHub release.
+- **Updating the model:** the model is trained and exported by the study repository
+  [`hsborges-msr/github-location-inference`](https://github.com/hsborges-msr/github-location-inference) (private),
+  which includes this repository as the submodule `packages/country-classifier`. Export it with
+  `python -m location_ft.export_onnx --trim-vocab …`, copy `classifier.json`, `tokenizer.json`,
+  `tokenizer_config.json` and `model_int8.onnx` into `model/`, update this README's numbers and bump the version.
+- **Releasing:** bump `version`, then push the tag `v<version>`. `.github/workflows/release.yml` tests the package,
+  checks the packed tarball and attaches it to a GitHub release. `.github/workflows/ci.yml` runs the checks on every
+  push and pull request.
 
 ## License
 
 MIT (code and model). The base model, `intfloat/multilingual-e5-small`, is MIT-licensed. The labels were derived from
-public GitHub profiles and geocoded with data © OpenStreetMap contributors. Design records in the repository:
-`docs/adrs/0007` (task and training), `0008` (artifact and inference rule), `0018` (this package) and `0019` (the
-included model).
+public GitHub profiles and geocoded with data © OpenStreetMap contributors.

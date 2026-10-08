@@ -1,17 +1,17 @@
 {
-  "name": "@hsborges/github-country-classifier",
+  "name": "@hsborges-msr/github-country-classifier",
   "version": "0.1.0",
+  "packageManager": "yarn@1.22.22",
   "description": "Infer the country of a GitHub user from the public fields of their profile, in Node or in the browser (multilingual-e5-small, ONNX), with the model included",
   "license": "MIT",
-  "author": "Hudson Borges",
-  "homepage": "https://github.com/hsborges/github-location-inference/tree/master/packages/country-classifier#readme",
+  "author": "Hudson Silva Borges",
+  "homepage": "https://github.com/hsborges-msr/github-country-classifier#readme",
   "bugs": {
-    "url": "https://github.com/hsborges/github-location-inference/issues"
+    "url": "https://github.com/hsborges-msr/github-country-classifier/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hsborges/github-location-inference.git",
-    "directory": "packages/country-classifier"
+    "url": "git+https://github.com/hsborges-msr/github-country-classifier.git"
   },
   "keywords": [
     "github",

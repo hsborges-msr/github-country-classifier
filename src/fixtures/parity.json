@@ -1,0 +1,107 @@
+[
+ {
+  "text": "location: Porto Alegre, RS\ncompany: Acme Software\nbio: Desenvolvedor backend, apaixonado por Go",
+  "country_code": "BR",
+  "confidence": 0.999189
+ },
+ {
+  "text": "location: München\nbio: Softwareentwickler und Open-Source-Fan",
+  "country_code": "DE",
+  "confidence": 0.999143
+ },
+ {
+  "text": "location: Bengaluru, Karnataka\ncompany: @example-labs",
+  "country_code": "IN",
+  "confidence": 0.999509
+ },
+ {
+  "text": "location: 深圳\nbio: 全栈工程师",
+  "country_code": "CN",
+  "confidence": 0.99932
+ },
+ {
+  "text": "location: Tokyo, Japan\nbio: Webエンジニア",
+  "country_code": "JP",
+  "confidence": 0.999561
+ },
+ {
+  "text": "location: Lyon, France\ncompany: Exemple SAS\nemail_domain: orange.fr",
+  "country_code": "FR",
+  "confidence": 0.999189
+ },
+ {
+  "text": "location: Manchester, UK\nblog: https://example.co.uk",
+  "country_code": "GB",
+  "confidence": 0.999407
+ },
+ {
+  "text": "location: Москва\nbio: Разработчик",
+  "country_code": "RU",
+  "confidence": 0.998679
+ },
+ {
+  "text": "location: Seoul\nbio: 백엔드 개발자",
+  "country_code": "KR",
+  "confidence": 0.99938
+ },
+ {
+  "text": "location: Lagos, Nigeria\nbio: Mobile developer",
+  "country_code": "NG",
+  "confidence": 0.999146
+ },
+ {
+  "text": "location: Lisboa\ncompany: Exemplo Lda",
+  "country_code": "PT",
+  "confidence": 0.998021
+ },
+ {
+  "text": "location: Barcelona\nbio: Desarrollador web",
+  "country_code": "ES",
+  "confidence": 0.99897
+ },
+ {
+  "text": "location: Jakarta\nbio: Programmer",
+  "country_code": "ID",
+  "confidence": 0.998858
+ },
+ {
+  "text": "location: İstanbul\nbio: Yazılım geliştirici",
+  "country_code": "TR",
+  "confidence": 0.999252
+ },
+ {
+  "text": "location: Kyiv\nbio: Frontend розробник",
+  "country_code": "UA",
+  "confidence": 0.998834
+ },
+ {
+  "text": "email_domain: example.com.br\nbio: dev",
+  "country_code": "BR",
+  "confidence": 0.997215
+ },
+ {
+  "text": "email_domain: gmail.com",
+  "country_code": "US",
+  "confidence": 0.462957
+ },
+ {
+  "text": "bio: I like open source",
+  "country_code": "US",
+  "confidence": 0.480647
+ },
+ {
+  "text": "company: Freelancer",
+  "country_code": "US",
+  "confidence": 0.180647
+ },
+ {
+  "text": "twitter_username: dev_example",
+  "country_code": "US",
+  "confidence": 0.173849
+ },
+ {
+  "text": "location: Toronto, Ontario\nbio: building developer tools and small libraries for the web building developer tools and small libraries for the web building developer tools and small libraries for the web building developer tools and small libraries for the web building developer tools and small libraries for the web building developer tools and small libraries for the web building developer tools and small libraries for the web building developer tools and small libraries for the web building developer tools and small libraries for the web building developer tools and small libraries for the web building developer tools and small libraries for the web building developer tools and small libraries for the web ",
+  "country_code": "CA",
+  "confidence": 0.999485
+ }
+]

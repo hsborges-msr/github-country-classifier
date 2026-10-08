@@ -19,12 +19,12 @@ trap cleanup EXIT
 cd "$work"
 ls -l ./*.tgz
 npm init -y >/dev/null
-npm install --silent --no-audit --no-fund ./hsborges-github-country-classifier-*.tgz onnxruntime-node@^1.30.0 onnxruntime-web@^1.30.0
+npm install --silent --no-audit --no-fund ./hsborges-msr-github-country-classifier-*.tgz onnxruntime-node@^1.30.0 onnxruntime-web@^1.30.0
 
 cat > check.mjs <<'EOF'
 import { readFile } from "node:fs/promises";
-import { describeCountryInput, loadCountryClassifier as loadNode } from "@hsborges/github-country-classifier/node";
-import { loadCountryClassifier as loadWeb } from "@hsborges/github-country-classifier/web";
+import { describeCountryInput, loadCountryClassifier as loadNode } from "@hsborges-msr/github-country-classifier/node";
+import { loadCountryClassifier as loadWeb } from "@hsborges-msr/github-country-classifier/web";
 
 const text = describeCountryInput({ location: "Recife, Brasil", company: "CESAR" });
 // Node's fetch does not read file: URLs, which is where the bundled model is outside a bundler.

@@ -1,0 +1,42 @@
+# Packs the package (code and model) and attaches the tarball to a GitHub release; it is not published to any npm
+# registry. Trigger: push a tag `v<version>` matching package.json. Users install it with
+#   npm install https://github.com/hsborges-msr/github-country-classifier/releases/download/v<version>/hsborges-msr-github-country-classifier-<version>.tgz
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+      - run: yarn install --frozen-lockfile
+
+      - name: Check the tag against the package version
+        run: |
+          version=$(node -p 'require("./package.json").version')
+          test "${GITHUB_REF_NAME}" = "v${version}" || { echo "tag ${GITHUB_REF_NAME} != v${version}"; exit 1; }
+
+      - run: yarn typecheck
+      - run: yarn test
+      - name: Pack and check the tarball
+        run: yarn smoke:pack
+
+      - name: Attach the tarball to a release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tarball=$(npm pack --silent)
+          gh release create "${GITHUB_REF_NAME}" "${tarball}" --title "${GITHUB_REF_NAME}" \
+            --notes "Install: \`npm install https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/${tarball}\` plus \`onnxruntime-node\` or \`onnxruntime-web\`."
