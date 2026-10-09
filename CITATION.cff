@@ -3,11 +3,12 @@ message: "If you use this software, please cite it as below."
 type: software
 title: "GitHub Country Classifier: Inferring a Developer's Country from Public GitHub Profiles"
 abstract: >-
-  A fine-tuned multilingual-e5-small classifier that infers the country (ISO 3166-1 alpha-2, 209 classes) of a GitHub
-  user from the public fields of their profile (location, company, blog, email domain, Twitter handle, bio), shipped as
-  a 45 MB int8 ONNX model with a trimmed vocabulary that runs locally in Node.js or the browser. Trained on 394,221
-  users whose declared locations were geocoded with Nominatim; 98.8% accuracy on 46,518 held-out users with a
-  location and 89.1% on 2,922 users without one, labelled by a large language model with grounded evidence.
+  A fine-tuned multilingual-e5-small classifier that infers the country (ISO 3166-1 alpha-2, 245 classes) of a GitHub
+  user from the public fields of their profile (location, company, blog, email domain, Twitter handle, bio), or
+  abstains, shipped as a 45 MB int8 ONNX model with a trimmed vocabulary that runs locally in Node.js or the browser.
+  Trained on 394,221 users whose declared locations were geocoded with Nominatim, plus users without a location
+  labelled by email-domain rules and by a large language model, and GeoNames city names; 98.7% accuracy on 46,518
+  held-out users with a location and 95.8% on held-out users without one whose profile names a place.
 authors:
   - family-names: Borges
     given-names: Hudson Silva
@@ -15,8 +16,8 @@ authors:
 repository-code: "https://github.com/hsborges-msr/github-country-classifier"
 url: "https://hsborges-msr.github.io/github-country-classifier/"
 license: MIT
-version: 0.1.0
-date-released: "2026-10-08"
+version: 0.2.0
+date-released: "2026-10-09"
 keywords:
   - GitHub
   - mining software repositories

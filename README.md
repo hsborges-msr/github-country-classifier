@@ -25,8 +25,9 @@ fine-tuned multilingual transformer that ships inside the package and runs on yo
 
 | | |
 | --- | --- |
-| 🎯 **Accurate** | **98.8%** on 46,518 held-out users who declare a location (95% CI 98.7–98.9%), across **209 countries** |
-| 🔍 **Beyond the location field** | **89.1%** on users with *no* declared location whose profile names a place elsewhere; **97.9%** precision when answering at ≥ 95% confidence |
+| 🎯 **Accurate** | **98.7%** on 46,518 held-out users who declare a location (95% CI 98.5–98.8%), across **245 countries** |
+| 🔍 **Beyond the location field** | **95.8%** on held-out users with *no* declared location whose profile names a place elsewhere |
+| 🤐 **Abstains when unsure** | By default answers only at ≥ 98.6% confidence, a threshold set for 95% precision on profiles without their location: `null` instead of a guess |
 | ⚡ **Fast and local** | ~**15 ms per profile** on a 2015 laptop CPU; no API calls, no profile text leaves your process or browser tab |
 | 📦 **Self-contained** | The 45 MB model is in the package: one `npm install`, no downloads at run time, no service to host |
 | 🌍 **Multilingual** | Built on `multilingual-e5-small`; reads places and bios in Latin, Cyrillic, Chinese, Japanese and Korean script alike |
@@ -46,9 +47,9 @@ the ONNX Runtime for your platform:
 
 ```sh
 # Node
-npm install https://github.com/hsborges-msr/github-country-classifier/releases/download/v0.1.0/hsborges-msr-github-country-classifier-0.1.0.tgz onnxruntime-node
+npm install https://github.com/hsborges-msr/github-country-classifier/releases/download/v0.2.0/hsborges-msr-github-country-classifier-0.2.0.tgz onnxruntime-node
 # Browser (with a bundler such as Vite or webpack 5)
-npm install https://github.com/hsborges-msr/github-country-classifier/releases/download/v0.1.0/hsborges-msr-github-country-classifier-0.1.0.tgz onnxruntime-web
+npm install https://github.com/hsborges-msr/github-country-classifier/releases/download/v0.2.0/hsborges-msr-github-country-classifier-0.2.0.tgz onnxruntime-web
 ```
 
 ```ts
@@ -57,7 +58,7 @@ import { describeCountryInput, loadCountryClassifier } from "@hsborges-msr/githu
 const { classify } = await loadCountryClassifier();
 const profile = await (await fetch("https://api.github.com/users/octocat")).json();
 const [prediction] = await classify([describeCountryInput(profile)]);
-// { country_code: "US", confidence: 0.9995, top: [["US", 0.9995], ["FR", 0.00003], ["MX", 0.00003]] }
+// { country_code: "US", confidence: 0.9991, top: [["US", 0.9991], ["CA", 0.00009], ["IN", 0.00008]] }
 ```
 
 The tarball is 32 MB (62 MB unpacked), almost all of it the model; ONNX Runtime is an optional peer dependency, so
@@ -66,25 +67,29 @@ install only the one you use.
 ## Results
 
 Evaluated with ONNX Runtime on the shipped model file, one profile per run, as the package runs it (the JavaScript
-runtimes are tested to give the same answers as the Python evaluation). Intervals are Wilson 95% intervals.
+runtimes are tested to give the same answers as the Python evaluation). None of these users was used for training or
+calibration. Intervals are Wilson 95% intervals.
 
-| Evaluation set | Majority class | Always answering | ≥ 50% confidence | ≥ 90% | ≥ 95% |
+| Evaluation set | Majority class | Always answering | ≥ 50% confidence | ≥ 90% | Default threshold (98.6%) |
 | --- | --- | --- | --- | --- | --- |
-| **Test split**: 46,518 users who declare a location | 16.5% (US) | **98.8%** (98.7–98.9) | 99.5% precision, 99.1% answered | 99.8% / 97.7% | **99.9%** / 97.1% |
-| **Teacher check set**: 2,922 users without a location who name a place elsewhere | 20.7% (US) | **89.1%** (88.0–90.2) | 94.6% / 90.4% | 97.4% / 78.8% | **97.9%** (97.2–98.4) / 73.2% |
+| **Test split**: 46,518 users who declare a location | 16.5% (US) | **98.7%** (98.5–98.8) | 99.4% precision, 98.8% answered | 99.8% / 97.1% | **99.9%** (99.9–100) / 93.5% |
+| **Location hidden**: the same users with the `location` line removed (11% are left with nothing) | 16.5% (US) | 44.1% (43.7–44.6) | 84.3% / 36.3% | 94.2% / 23.2% | **96.6%** (96.2–97.0) / 13.9% |
+| **Teacher test set**: 285 users without a location who name a place elsewhere | 18.9% (US) | **95.8%** (92.8–97.6) | 98.5% / 94.7% | 99.6% / 87.0% | **100%** (98.0–100) / 66.0% |
+| **Domain test set**: 2,741 users without a location whose email or blog domain names a country | 35.0% (CN) | 98.5% (97.9–98.9) | 99.5% / 98.3% | 99.7% / 95.4% | 99.9% (99.7–100) / 83.9% |
 
 *Precision* counts correct answers among those at or above the minimum confidence; *answered* is the share of profiles
-that reach it. Raising the minimum trades coverage for precision, and the trade is steep in the hard case: at ≥ 95%,
-the model answers 73% of the teacher set with 97.9% precision.
+that reach it. The default threshold is the lowest confidence at which validation precision reaches 95% both for users
+with their location and for the same kind of users with it removed, the harder case, which sets it. Pass a lower
+`threshold` to answer more profiles at lower precision.
 
-**Compression is almost free.** The shipped model is 10× smaller than the full-precision export and loses about
-0.1 points on the test split and 0.6 on the teacher set, inside or near the intervals:
+**Compression is almost free in accuracy.** The shipped model is 10× smaller than the full-precision export and loses
+0.1–0.4 points when always answering. It is slightly less confident at the top, so at the default threshold it
+answers fewer profiles, with the same or higher precision:
 
-| Model | Size | Test split | Teacher check set |
-| --- | --- | --- | --- |
-| Full fp32 export | 470 MB | 98.9% | 89.7% |
-| Trimmed vocabulary, int8 (tokens seen ≥ 1×) | 52 MB | 98.85% | 89.15% |
-| **Trimmed vocabulary, int8 (tokens seen ≥ 2×), shipped** | **45 MB** | **98.83%** | **89.15%** |
+| Model | Size | Test split | Teacher test set | Location hidden, at the default threshold |
+| --- | --- | --- | --- | --- |
+| Full fp32 export | 470 MB | 98.8% | 95.8% | 96.2% precision, 16.0% answered |
+| **Trimmed vocabulary, int8, shipped** | **45 MB** | **98.65%** | **95.8%** | **96.6%**, 13.9% |
 
 **Context from the pilot experiments** (smaller samples and earlier dataset versions, so indicative only): a character
 n-gram TF-IDF model with logistic regression reached 88.2% on located users and 77.4% on teacher-labelled unlocated
@@ -96,10 +101,14 @@ slower than this package.
 - **The test split is mostly about reading a declared location.** Those users keep their `location` line in the input,
   as they would at inference. 98.8% is therefore the model's skill at turning messy free text ("NYC", "Bengaluru,
   Karnataka", "Москва") into a country, plus whatever the other fields add.
-- **The teacher check set is the hard case**: profiles with no location, labelled by a large language model that had to
-  quote its evidence from the profile (company, bio, email domain), with answers kept only when the quote is found. Such
-  profiles are a minority: 2.9% of the 100,028 location-less profiles sent to the model named a place at all.
-- **Labels are geocoder and LLM outputs, not ground truth.** Accuracy is agreement with those labels; both make
+- **Location hidden is the pessimistic case.** Its label is the country of the declared location, but the remaining
+  fields may say nothing (`email_domain: gmail.com`) or point elsewhere (a foreign employer). It is the set the default
+  threshold is calibrated for.
+- **The teacher and domain test sets are the optimistic case**: profiles with no location that name a place, labelled
+  by a large language model that had to quote its evidence from the profile, or by rules on the email and blog domain.
+  Such profiles are a minority: 2.9% of the 100,028 location-less profiles sent to the language model named a place at
+  all. Agreement with the domain rules is partly by construction, since the model also learned from them.
+- **Labels are geocoder, rule and LLM outputs, not ground truth.** Accuracy is agreement with those labels; all make
   mistakes, so part of the residual error is label noise.
 
 ## How it works
@@ -109,9 +118,9 @@ flowchart LR
   P["GitHub profile"] --> I["describeCountryInput<br/>6 public fields"]
   I --> T["SentencePiece tokenizer<br/>'query: ' + text, ≤ 96 tokens"]
   T --> E["multilingual-e5-small<br/>12 layers · int8 · trimmed vocabulary"]
-  E --> H["mean pooling +<br/>linear head (209 countries)"]
+  E --> H["mean pooling +<br/>linear head (245 countries)"]
   H --> C["softmax(logits / T)<br/>calibrated probabilities"]
-  C --> A["country_code, confidence, top 3"]
+  C --> A["country_code (or null<br/>below the threshold),<br/>confidence, top 3"]
 ```
 
 1. **Input.** `describeCountryInput` writes one `field: value` line per non-empty field, in the order `location`,
@@ -129,8 +138,9 @@ flowchart LR
    tokens.
 3. **Network.** ONNX Runtime runs `model/model_int8.onnx`: the encoder (12 transformer layers, hidden size 384), the
    average of its outputs over the tokens, and a linear layer with one score per country.
-4. **Answer.** `softmax(logits / temperature)`; the most probable country, its probability and the top three. A profile
-   with none of the six fields answers `null` without running the model.
+4. **Answer.** `softmax(logits / temperature)`; the most probable country when its probability reaches the threshold
+   (`null` otherwise), its probability and the top three. A profile with none of the six fields answers `null` without
+   running the model.
 
 ## How the model was built
 
@@ -139,9 +149,9 @@ flowchart LR
   G["GH Archive<br/>360 hours, Sep 2026"] --> U["1,965,503<br/>profiles fetched"]
   U --> L["515,750 declare<br/>a location"]
   L --> N["Normalize + geocode<br/>(Nominatim / OSM)"]
-  N --> D["464,033 labels<br/>209 countries"]
+  N --> D["Labels: 464,033 geocoded,<br/>+ domain rules, LLM teacher,<br/>GeoNames cities"]
   D --> F["Fine-tune<br/>multilingual-e5-small"]
-  F --> K["Temperature<br/>calibration"]
+  F --> K["Temperature +<br/>threshold"]
   K --> X["Trim vocabulary +<br/>int8 → 45 MB"]
 ```
 
@@ -154,22 +164,30 @@ flowchart LR
   joke places removed; abbreviations such as "NYC" expanded) and geocoded with [Nominatim](https://nominatim.org/) (data
   © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors); low-importance matches sharing no word with
   the query were rejected. 464,036 users had their location resolved to a country, which is their label.
-- **Splits:** 464,033 labelled examples over 209 countries, split by a hash of the user id: 394,221 for training,
-  23,294 for validation, 46,518 for test. The most frequent labels are US (16.5%), IN, CN, BR, DE, GB, FR and CA.
-- **Teacher check set:** 2,922 users without a declared location, labelled by DeepSeek V4.1 Flash with grounded,
-  quoted evidence and an instruction not to infer from names. Never used for training or calibration.
+- **Users without a location**, two more label sources: 26,187 whose email or blog domain names a country (a
+  country-code ending such as `.de`, or a host such as `qq.com` learned from located users), and 2,922 labelled by
+  DeepSeek V4.1 Flash with grounded, quoted evidence and an instruction not to infer from names.
+- **Splits:** every source is split by the same hash of the user id, 85% training, 5% validation, 10% test, so no test
+  user is trained on through another source. Located users: 394,221 / 23,294 / 46,518 (the most frequent labels are US
+  at 16.5%, IN, CN, BR, DE, GB, FR and CA); domain rules: 22,109 / 1,337 / 2,741; teacher: 2,496 / 141 / 285.
+- **GeoNames cities:** 23,362 synthetic `location: <city>` rows from the
+  [GeoNames](https://www.geonames.org/) cities with at least 15,000 inhabitants (CC BY 4.0), training only, so that
+  cities no user wrote are still known. With them the label set covers 245 countries and territories.
 
 ### Training
 
 - **Architecture:** [`intfloat/multilingual-e5-small`](https://huggingface.co/intfloat/multilingual-e5-small)
   (Wang et al., 2024; 12 layers, hidden size 384, 118M parameters), mean pooling over the attention mask, dropout 0.1,
-  one linear layer over the 209 labels, and the `query: ` prefix the base model expects.
-- **Fine-tuning:** all encoder layers except the word embeddings, one epoch over the 394,221 training examples,
+  one linear layer over the 245 labels, and the `query: ` prefix the base model expects.
+- **Fine-tuning:** all encoder layers except the word embeddings, one epoch over the 442,188 training examples,
   batch 32, AdamW (weight decay 0.01), learning rates 5e-5 for the encoder and 1e-3 for the head, linear schedule with
-  6% warm-up, gradient clipping at 1.0: 12,320 steps, about 4 minutes on one GPU in bf16.
-- **Calibration:** temperature scaling (T = 1.141) fitted on 5,000 validation examples by minimum negative
-  log-likelihood. The threshold for a 95% validation precision came out as 0 (validation precision was already 98.8%
-  when answering everything), so the model always answers a country and leaves the cut-off to you.
+  6% warm-up, gradient clipping at 1.0: 13,819 steps, about 5 minutes on one GPU in bf16.
+- **Location dropout:** the `location` line is removed from 20% of the located training profiles (69,784), so the model
+  also learns from the other fields what a located user's profile says without it.
+- **Calibration:** temperature scaling (T = 1.058) fitted on the 23,294 validation users by minimum negative
+  log-likelihood, with the same 20% location dropout. The threshold is the lowest value (on a 0.01 grid, 0.001 from
+  0.95) whose validation precision reaches 95% both for users who kept their location and for the 4,130 whose location
+  was removed: 0.986. Users who keep their location reach 95% at any threshold; the location-hidden ones set it.
 
 ### Compression
 
@@ -187,9 +205,10 @@ flowchart LR
 - **Estimates, not facts.** The model infers a country from company names, email domains, languages and places in a bio.
   Use it for aggregate questions (where a project's contributors are, how a community is distributed), not to label or
   make decisions about individuals.
-- **Calibrated on users who declare a location.** The confidences hold up on the teacher check set (97.9% precision at
-  ≥ 95%), but that set only covers profiles that name a place somewhere. Most location-less profiles name none; for
-  them a low confidence is the expected answer, and precision at a given confidence is unmeasured.
+- **Calibrated on users who declare a location.** The threshold is set on located users with their location removed,
+  and holds on the teacher and domain test sets, but those only cover profiles that name a place somewhere. Most
+  location-less profiles name none; for them `null` is the expected answer, and precision on a random sample of them
+  is not yet measured.
 - **A snapshot of two weeks of activity.** Labels come from users active in September 2026 and from Nominatim's reading
   of their locations. Countries with few users then were learned from few examples, and tokens first seen after the
   collection read as unknown.
@@ -203,7 +222,7 @@ flowchart LR
   `classifier.json`, `tokenizer.json`, `tokenizer_config.json` and `{ onnxFile }`, default `model.onnx` in Node and
   `model_int8.onnx` in the browser. Or it may be a `ModelFiles` object with the path or URL of each file.
 - **`classify(texts)`** answers in order: `country_code` (the top country, or `null` below `threshold`; the included
-  model's threshold is 0), `confidence` and `top` (three most probable countries).
+  model's threshold is 0.986, see [Results](#results)), `confidence` and `top` (three most probable countries).
 - **Options:** `threshold`, `batchSize`; Node: `threads`; browser: `onProgress`, `cache` (Cache API name, or `false`),
   `wasmPaths`, `executionProviders`, `fetch`.
 - **The core entry** (`@hsborges-msr/github-country-classifier`) needs no runtime: `describeCountryInput`,
@@ -262,7 +281,7 @@ If you use this classifier in research, please cite it (GitHub's "Cite this repo
   author  = {Borges, Hudson Silva},
   title   = {{GitHub Country Classifier}: Inferring a Developer's Country from Public GitHub Profiles},
   year    = {2026},
-  version = {0.1.0},
+  version = {0.2.0},
   url     = {https://github.com/hsborges-msr/github-country-classifier}
 }
 ```
@@ -274,4 +293,5 @@ MIT, for the code and the model. Built on [`intfloat/multilingual-e5-small`](htt
 Report*, arXiv:2402.05672, 2024), [ONNX Runtime](https://onnxruntime.ai/) and
 [Hugging Face Tokenizers](https://github.com/huggingface/tokenizers.js). Event data from
 [GH Archive](https://www.gharchive.org/); locations geocoded with [Nominatim](https://nominatim.org/), data ©
-[OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.
+[OpenStreetMap](https://www.openstreetmap.org/copyright) contributors. City names for training from
+[GeoNames](https://www.geonames.org/) (CC BY 4.0).

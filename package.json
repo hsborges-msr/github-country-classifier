@@ -1,6 +1,6 @@
 {
   "name": "@hsborges-msr/github-country-classifier",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "packageManager": "yarn@1.22.22",
   "description": "Infer the country of a GitHub user from the public fields of their profile, in Node or in the browser (multilingual-e5-small, ONNX), with the model included",
   "license": "MIT",
