@@ -2,106 +2,190 @@
  {
   "text": "location: Porto Alegre, RS\ncompany: Acme Software\nbio: Desenvolvedor backend, apaixonado por Go",
   "country_code": "BR",
-  "confidence": 0.998889
+  "confidence": 0.999683,
+  "city": "Porto Alegre",
+  "city_confidence": 0.999037,
+  "state": "Rio Grande do Sul",
+  "state_confidence": 0.999441
  },
  {
   "text": "location: München\nbio: Softwareentwickler und Open-Source-Fan",
   "country_code": "DE",
-  "confidence": 0.99879
+  "confidence": 0.999932,
+  "city": "Munich",
+  "city_confidence": 0.999403,
+  "state": "Bavaria",
+  "state_confidence": 0.999793
  },
  {
   "text": "location: Bengaluru, Karnataka\ncompany: @example-labs",
   "country_code": "IN",
-  "confidence": 0.99948
+  "confidence": 0.999929,
+  "city": "Bengaluru",
+  "city_confidence": 0.999859,
+  "state": "Karnataka",
+  "state_confidence": 0.999919
  },
  {
   "text": "location: 深圳\nbio: 全栈工程师",
   "country_code": "CN",
-  "confidence": 0.997864
+  "confidence": 0.99937,
+  "city": "Shenzhen",
+  "city_confidence": 0.997993,
+  "state": "Guangdong",
+  "state_confidence": 0.999054
  },
  {
   "text": "location: Tokyo, Japan\nbio: Webエンジニア",
   "country_code": "JP",
-  "confidence": 0.999365
+  "confidence": 0.999978,
+  "city": "Tokyo",
+  "city_confidence": 0.999939,
+  "state": "Tokyo",
+  "state_confidence": 0.999928
  },
  {
   "text": "location: Lyon, France\ncompany: Exemple SAS\nemail_domain: orange.fr",
   "country_code": "FR",
-  "confidence": 0.998999
+  "confidence": 0.99976,
+  "city": "Lyon",
+  "city_confidence": 0.999313,
+  "state": "Auvergne-Rhône-Alpes",
+  "state_confidence": 0.999152
  },
  {
   "text": "location: Manchester, UK\nblog: https://example.co.uk",
   "country_code": "GB",
-  "confidence": 0.998673
+  "confidence": 0.999647,
+  "city": "Manchester",
+  "city_confidence": 0.999418,
+  "state": "England",
+  "state_confidence": 0.99943
  },
  {
   "text": "location: Москва\nbio: Разработчик",
   "country_code": "RU",
-  "confidence": 0.991425
+  "confidence": 0.999929,
+  "city": null,
+  "city_confidence": 0.000271,
+  "state": "Moscow",
+  "state_confidence": 0.99971
  },
  {
   "text": "location: Seoul\nbio: 백엔드 개발자",
   "country_code": "KR",
-  "confidence": 0.999254
+  "confidence": 0.999998,
+  "city": "Seoul",
+  "city_confidence": 0.999957,
+  "state": "Seoul",
+  "state_confidence": 0.999931
  },
  {
   "text": "location: Lagos, Nigeria\nbio: Mobile developer",
   "country_code": "NG",
-  "confidence": 0.998318
+  "confidence": 0.999933,
+  "city": "Lagos",
+  "city_confidence": 0.999789,
+  "state": "Lagos State",
+  "state_confidence": 0.999856
  },
  {
   "text": "location: Lisboa\ncompany: Exemplo Lda",
   "country_code": "PT",
-  "confidence": 0.996014
+  "confidence": 0.99982,
+  "city": "Lisbon",
+  "city_confidence": 0.999506,
+  "state": "Lisbon",
+  "state_confidence": 0.999489
  },
  {
   "text": "location: Barcelona\nbio: Desarrollador web",
   "country_code": "ES",
-  "confidence": 0.998328
+  "confidence": 0.999915,
+  "city": "Barcelona",
+  "city_confidence": 0.999809,
+  "state": "Catalonia",
+  "state_confidence": 0.999852
  },
  {
   "text": "location: Jakarta\nbio: Programmer",
   "country_code": "ID",
-  "confidence": 0.999311
+  "confidence": 0.99993,
+  "city": "Special Capital Region of Jakarta",
+  "city_confidence": 0.999862,
+  "state": "Special Capital Region of Jakarta",
+  "state_confidence": 0.999795
  },
  {
   "text": "location: İstanbul\nbio: Yazılım geliştirici",
   "country_code": "TR",
-  "confidence": 0.9986
+  "confidence": 0.99997,
+  "city": "Istanbul",
+  "city_confidence": 0.999838,
+  "state": "Marmara Region",
+  "state_confidence": 0.999863
  },
  {
   "text": "location: Kyiv\nbio: Frontend розробник",
   "country_code": "UA",
-  "confidence": 0.998355
+  "confidence": 0.999887,
+  "city": "Kyiv",
+  "city_confidence": 0.999784,
+  "state": "Kyiv",
+  "state_confidence": 0.999776
  },
  {
   "text": "email_domain: example.com.br\nbio: dev",
   "country_code": "BR",
-  "confidence": 0.995235
+  "confidence": 0.997197,
+  "city": null,
+  "city_confidence": 0.148678,
+  "state": null,
+  "state_confidence": 0.29195
  },
  {
   "text": "email_domain: gmail.com",
   "country_code": "IN",
-  "confidence": 0.153198
+  "confidence": 0.189252,
+  "city": null,
+  "city_confidence": 0.02441,
+  "state": null,
+  "state_confidence": 0.026151
  },
  {
   "text": "bio: I like open source",
   "country_code": "US",
-  "confidence": 0.19442
+  "confidence": 0.245739,
+  "city": null,
+  "city_confidence": 0.02363,
+  "state": null,
+  "state_confidence": 0.047107
  },
  {
   "text": "company: Freelancer",
-  "country_code": "US",
-  "confidence": 0.085666
+  "country_code": "IN",
+  "confidence": 0.094959,
+  "city": null,
+  "city_confidence": 0.011131,
+  "state": null,
+  "state_confidence": 0.012892
  },
  {
   "text": "twitter_username: dev_example",
-  "country_code": "US",
-  "confidence": 0.131764
+  "country_code": "IN",
+  "confidence": 0.148832,
+  "city": null,
+  "city_confidence": 0.017724,
+  "state": null,
+  "state_confidence": 0.020598
  },
  {
   "text": "location: Toronto, Ontario\nbio: building developer tools and small libraries for the web building developer tools and small libraries for the web building developer tools and small libraries for the web building developer tools and small libraries for the web building developer tools and small libraries for the web building developer tools and small libraries for the web building developer tools and small libraries for the web building developer tools and small libraries for the web building developer tools and small libraries for the web building developer tools and small libraries for the web building developer tools and small libraries for the web building developer tools and small libraries for the web ",
   "country_code": "CA",
-  "confidence": 0.998932
+  "confidence": 0.999925,
+  "city": "Toronto",
+  "city_confidence": 0.999743,
+  "state": "Ontario",
+  "state_confidence": 0.999894
  }
 ]

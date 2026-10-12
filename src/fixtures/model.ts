@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
  * The full fp32 export of the training run, where this repository is checked out as `packages/country-classifier` of
  * the study repository; the fp32 runtime tests are skipped when it is absent (as in a standalone checkout).
  */
-export const MODEL_DIR = fileURLToPath(new URL("../../../../training/outputs/e5-small-v2/onnx/", import.meta.url));
+export const MODEL_DIR = fileURLToPath(new URL("../../../../training/outputs/e5-small-v4/onnx/", import.meta.url));
 export const HAS_MODEL = existsSync(`${MODEL_DIR}model.onnx`);
 
 /**
@@ -17,6 +17,10 @@ export interface ParityCase {
   text: string;
   country_code: string;
   confidence: number;
+  city: string | null;
+  city_confidence: number;
+  state: string | null;
+  state_confidence: number;
 }
 
 export async function readParityCases(): Promise<ParityCase[]> {

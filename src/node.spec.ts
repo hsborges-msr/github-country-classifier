@@ -23,6 +23,10 @@ test.skipIf(!HAS_MODEL)("the fp32 model answers as the Python evaluation did, ba
     predictions.forEach((prediction, index) => {
       expect(prediction.top[0]?.[0]).toBe(cases[index]?.country_code);
       expect(prediction.confidence).toBeCloseTo(cases[index]?.confidence ?? Number.NaN, 3);
+      expect(prediction.city).toBe(cases[index]?.city);
+      expect(prediction.city_confidence).toBeCloseTo(cases[index]?.city_confidence ?? Number.NaN, 3);
+      expect(prediction.state).toBe(cases[index]?.state);
+      expect(prediction.state_confidence).toBeCloseTo(cases[index]?.state_confidence ?? Number.NaN, 3);
     });
   }
 });
