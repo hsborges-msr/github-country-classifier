@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { expect, test, vi } from "vitest";
 import { HAS_MODEL, MODEL_DIR, readParityCases } from "./fixtures/model.js";
-import { loadCountryClassifier } from "./web.js";
+import { EMPTY_PREDICTION, loadCountryClassifier } from "./web.js";
 
 /** Serves the model directory as if it were at https://models.test/e5/. */
 function serveModelDirectory() {
@@ -31,7 +31,7 @@ test.skipIf(!HAS_MODEL)("the browser runtime answers as the Python evaluation di
     expect(prediction.top[0]?.[0]).toBe(cases[index]?.country_code);
     expect(prediction.confidence).toBeCloseTo(cases[index]?.confidence ?? Number.NaN, 3);
   });
-  expect(await classify([""])).toEqual([{ country_code: null, confidence: null, top: [] }]);
+  expect(await classify([""])).toEqual([EMPTY_PREDICTION]);
 });
 
 test.skipIf(!HAS_MODEL)("the int8 model agrees with fp32 on confident answers", async () => {

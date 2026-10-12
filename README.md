@@ -141,6 +141,12 @@ flowchart LR
 4. **Answer.** `softmax(logits / temperature)`; the most probable country when its probability reaches the threshold
    (`null` otherwise), its probability and the top three. A profile with none of the six fields answers `null` without
    running the model.
+5. **City (models with a city head only).** A `classifier.json` in format 2 also lists city classes (`[country, name]`,
+   with one `[country, null]` "other city" class per country). The model then returns those city logits after the
+   country ones. A softmax over the city classes of the top country, at `city_temperature`, gives P(city | country).
+   `city_confidence` is P(country) × P(city | country) for the most probable named city, so it is never higher than
+   `confidence`. `city` is that name when the country is answered and `city_confidence` reaches `city_threshold`.
+   The included model has no city head, so its `city` is always `null`.
 
 ## How the model was built
 
@@ -222,7 +228,9 @@ flowchart LR
   `classifier.json`, `tokenizer.json`, `tokenizer_config.json` and `{ onnxFile }`, default `model.onnx` in Node and
   `model_int8.onnx` in the browser. Or it may be a `ModelFiles` object with the path or URL of each file.
 - **`classify(texts)`** answers in order: `country_code` (the top country, or `null` below `threshold`; the included
-  model's threshold is 0.986, see [Results](#results)), `confidence` and `top` (three most probable countries).
+  model's threshold is 0.986, see [Results](#results)), `confidence` and `top` (three most probable countries), then
+  `city`, `city_confidence` and `city_top` for the top country (`null`, `null`, `[]` without a city head, see
+  [How it works](#how-it-works)).
 - **Options:** `threshold`, `batchSize`; Node: `threads`; browser: `onProgress`, `cache` (Cache API name, or `false`),
   `wasmPaths`, `executionProviders`, `fetch`.
 - **The core entry** (`@hsborges-msr/github-country-classifier`) needs no runtime: `describeCountryInput`,

@@ -52,7 +52,7 @@ const result = (login: string, top: Array<[string, number]>): ActorResult => ({
   avatarUrl: "",
   htmlUrl: "",
   text: top.length ? "bio: x" : "",
-  prediction: { country_code: top[0]?.[0] ?? null, confidence: top[0]?.[1] ?? null, top },
+  prediction: { country_code: top[0]?.[0] ?? null, confidence: top[0]?.[1] ?? null, top, city: null, city_confidence: null, city_top: [] },
 });
 
 test("countryOf answers the top label only when it reaches the minimum confidence", () => {

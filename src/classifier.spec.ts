@@ -1,5 +1,5 @@
 import { expect, test, vi } from "vitest";
-import { createCountryClassifier, encodeBatch, predictFromLogits } from "./classifier.js";
+import { createCountryClassifier, EMPTY_PREDICTION, encodeBatch, predictFromLogits } from "./classifier.js";
 import { parseClassifierConfig, type ClassifierConfig } from "./config.js";
 
 const config: ClassifierConfig = {
@@ -21,6 +21,45 @@ test("parseClassifierConfig accepts the contract and rejects another input or po
   expect(() => parseClassifierConfig({ ...config, pooling: "cls" })).toThrow();
   expect(() => parseClassifierConfig({ ...config, labels: ["br"] })).toThrow();
   expect(() => parseClassifierConfig({ ...config, format: 2 })).toThrow();
+});
+
+const cityConfig: ClassifierConfig = {
+  ...config,
+  format: 2,
+  labels: ["BR", "US"],
+  temperature: 1,
+  threshold: 0.5,
+  cities: [["BR", "Recife"], ["BR", "Natal"], ["BR", null], ["US", "Austin"], ["US", null]],
+  city_temperature: 1,
+  city_threshold: 0.4,
+};
+
+test("parseClassifierConfig accepts a city head only in format 2, on known labels", () => {
+  expect(parseClassifierConfig(cityConfig)).toEqual(cityConfig);
+  expect(() => parseClassifierConfig({ ...cityConfig, format: 1 })).toThrow();
+  expect(() => parseClassifierConfig({ ...config, format: 2 })).toThrow();
+  expect(() => parseClassifierConfig({ ...cityConfig, cities: [["JP", "Tokyo"]] })).toThrow(/cities/);
+  expect(() => parseClassifierConfig({ ...cityConfig, city_threshold: 2 })).toThrow();
+});
+
+test("predictFromLogits answers the city of the top country with P(country) x P(city | country)", () => {
+  // P(BR) = 0.8; P(city | BR) = 0.5 Recife, 0.3 Natal, 0.2 other; the US city logits are ignored.
+  const logits = [0.8, 0.2, 0.5, 0.3, 0.2, 100, 100].map(Math.log);
+  const prediction = predictFromLogits(logits, cityConfig);
+  expect(prediction).toMatchObject({ country_code: "BR", city: "Recife" });
+  expect(prediction.city_confidence).toBeCloseTo(0.4, 10);
+  expect(prediction.city_top.map(([name]) => name)).toEqual(["Recife", "Natal"]);
+  expect(prediction.city_top[1]?.[1]).toBeCloseTo(0.24, 10);
+  expect(predictFromLogits(logits, { ...cityConfig, city_threshold: 0.41 }).city).toBeNull();
+  // An unanswered country answers no city; its city confidence is still reported.
+  const unanswered = predictFromLogits(logits, cityConfig, 0.9);
+  expect(unanswered).toMatchObject({ country_code: null, city: null });
+  expect(unanswered.city_confidence).toBeCloseTo(0.4, 10);
+  // A country without named cities, and a country-only model, answer no city.
+  expect(predictFromLogits([0.2, 0.8, 0.5, 0.5].map(Math.log), { ...cityConfig, cities: [["BR", "Recife"], ["BR", null]] }))
+    .toMatchObject({ country_code: "US", city: null, city_confidence: null, city_top: [] });
+  expect(predictFromLogits([2, 1, 0, -1], config)).toMatchObject({ city: null, city_confidence: null, city_top: [] });
+  expect(() => predictFromLogits([1, 2], cityConfig)).toThrow(/one per label and city/);
 });
 
 test("predictFromLogits applies the temperature, the threshold and reports the top three", () => {
@@ -64,10 +103,11 @@ test("createCountryClassifier answers empty texts without the model and keeps th
   const classify = createCountryClassifier({ config, tokenizer, padId: 1, run });
   const predictions = await classify(["Berlin", "", "Austin"]);
   expect(predictions.map(prediction => prediction.country_code)).toEqual(["DE", null, "US"]);
-  expect(predictions[1]).toEqual({ country_code: null, confidence: null, top: [] });
+  expect(predictions[1]).toEqual(EMPTY_PREDICTION);
   expect(run).toHaveBeenCalledTimes(1);
   expect(run.mock.calls[0]?.[2]).toBe(2);
-  expect(await classify(["", " "])).toEqual([{ country_code: null, confidence: null, top: [] }, { country_code: null, confidence: null, top: [] }]);
+  expect(await classify(["", " "])).toEqual([EMPTY_PREDICTION, EMPTY_PREDICTION]);
+  expect(EMPTY_PREDICTION).toEqual({ country_code: null, confidence: null, top: [], city: null, city_confidence: null, city_top: [] });
   expect(run).toHaveBeenCalledTimes(1);
 });
 
@@ -78,6 +118,13 @@ test("createCountryClassifier runs the model in batches of at most batchSize, in
   expect(predictions.map(prediction => prediction.country_code)).toEqual(["DE", "US", null, "DE", "DE"]);
   expect(run.mock.calls.map(call => call[2])).toEqual([2, 2]);
   expect(() => createCountryClassifier({ config, tokenizer, padId: 1, run, batchSize: 0 })).toThrow(/batchSize/);
+});
+
+test("createCountryClassifier splits each row's country and city logits", async () => {
+  const run = async (_ids: BigInt64Array, _mask: BigInt64Array, batchSize: number) =>
+    new Float32Array(Array.from({ length: batchSize }, () => [0.8, 0.2, 0.5, 0.3, 0.2, 100, 100].map(Math.log)).flat());
+  const classify = createCountryClassifier({ config: cityConfig, tokenizer, padId: 1, run });
+  expect((await classify(["a", "b"])).map(prediction => [prediction.country_code, prediction.city])).toEqual([["BR", "Recife"], ["BR", "Recife"]]);
 });
 
 test("createCountryClassifier rejects a model output of the wrong size", async () => {
