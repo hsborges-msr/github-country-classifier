@@ -3,7 +3,7 @@ import { describeCountryInput, loadCountryClassifier, type LoadProgress } from "
 import { forEachConcurrently } from "./concurrency.js";
 import { createGitHubClient, RateLimitError, type RateLimit } from "./github.js";
 import { createWorldMap, type WorldMap } from "./map.js";
-import { addActivity, countryOf, describeActivity, newActors, nextProfileLimit, PROFILE_LIMIT, summarize, tallyCountries, type ActivityState, type ActorResult } from "./state.js";
+import { addActivity, countryOf, describeActivity, newActors, nextProfileLimit, placeOf, PROFILE_LIMIT, summarize, tallyCountries, type ActivityState, type ActorResult } from "./state.js";
 
 // The bundled model by default; `?model=<url>` points at another exported model directory, `?onnx=model.onnx` picks its fp32 file.
 const params = new URLSearchParams(location.search);
@@ -122,13 +122,18 @@ function renderRanking(counts: ReadonlyMap<string, number>) {
 function userCard(result: ActorResult): HTMLLIElement {
   const code = countryOf(result, minConfidence());
   const confidence = result.prediction.confidence;
+  const place = placeOf(result, minConfidence());
   const answer = code
-    ? h("span", { class: "answer" }, `${flag(code)} ${countryName(code)}`, h("small", {}, ` ${percent(confidence ?? 0)}`))
+    ? h("span", { class: "answer" }, `${flag(code)} ${countryName(code)}`, h("small", {}, ` ${percent(confidence ?? 0)}`), ...(place ? [h("span", { class: "place" }, place)] : []))
     : h("span", { class: "answer indeterminate" }, result.text ? `Indeterminate (best: ${result.prediction.top[0]?.[0] ?? "?"} ${percent(confidence ?? 0)})` : "Indeterminate (empty profile)");
   const activity = describeActivity(activityState.activity.get(result.login));
   const activityLine = h("p", { class: "activity" }, activity.types.map(([type, count]) => `${type} ×${count}`).join(" · "));
   const details = h("details", {}, h("summary", {}, "input"), h("pre", {}, result.text || "(no location, company, blog, email, Twitter or bio)"));
-  if (result.prediction.top.length > 1) details.append(h("p", { class: "top" }, `Top 3: ${result.prediction.top.map(([label, p]) => `${label} ${percent(p)}`).join(" · ")}`));
+  const { top, city_top, state_top } = result.prediction;
+  const topLine = (label: string, ranked: Array<[string, number]>) => h("p", { class: "top" }, `${label}: ${ranked.map(([name, p]) => `${name} ${percent(p)}`).join(" · ")}`);
+  if (top.length > 1) details.append(topLine("Top 3", top));
+  if (city_top.length) details.append(topLine("Cities", city_top));
+  if (state_top.length) details.append(topLine("States", state_top));
   return h(
     "li",
     {},

@@ -6,6 +6,7 @@ import { parseClassifierConfig, type ClassifierConfig } from "./config.js";
  * A country answer: `country_code` is null below the threshold, and `confidence` is null only for an empty input.
  * The city fields are about the top country: `city` is null unless the country is answered and `city_confidence`
  * reaches the city threshold; `city_confidence` is null when the model has no named city for that country (or no city head).
+ * The state fields work the same way with the state head.
  */
 export interface CountryPrediction {
   country_code: string | null;
@@ -17,13 +18,25 @@ export interface CountryPrediction {
   city_confidence: number | null;
   /** The three most probable named cities of the top country with their probabilities, as `city_confidence`. */
   city_top: Array<[string, number]>;
+  state: string | null;
+  /** P(country) x P(state | country) of the first state of `state_top`, never above `confidence`. */
+  state_confidence: number | null;
+  /** The three most probable named states of the top country with their probabilities, as `state_confidence`. */
+  state_top: Array<[string, number]>;
 }
 
-type CityFields = Pick<CountryPrediction, "city" | "city_confidence" | "city_top">;
+/** A city or state answer of the top country. */
+interface SubAnswer {
+  value: string | null;
+  confidence: number | null;
+  top: Array<[string, number]>;
+}
 
-const NO_CITY: CityFields = Object.freeze({ city: null, city_confidence: null, city_top: [] }) as CityFields;
+const NO_ANSWER: SubAnswer = Object.freeze({ value: null, confidence: null, top: [] }) as SubAnswer;
 
-export const EMPTY_PREDICTION: CountryPrediction = Object.freeze({ country_code: null, confidence: null, top: [], ...NO_CITY }) as CountryPrediction;
+export const EMPTY_PREDICTION: CountryPrediction = Object.freeze({
+  country_code: null, confidence: null, top: [], city: null, city_confidence: null, city_top: [], state: null, state_confidence: null, state_top: [],
+}) as CountryPrediction;
 
 function softmax(logits: readonly number[], temperature: number): number[] {
   const scaled = logits.map(value => value / temperature);
@@ -33,35 +46,64 @@ function softmax(logits: readonly number[], temperature: number): number[] {
   return exps.map(value => value / sum);
 }
 
-/** Width of a model's output row: one logit per label, then one per city class. */
-const logitsWidth = (config: ClassifierConfig): number => config.labels.length + (config.format === 2 ? config.cities.length : 0);
+interface SubHead {
+  name: "city" | "state";
+  classes: ReadonlyArray<readonly [string, string | null]>;
+  temperature: number;
+  threshold: number;
+}
+
+/** The heads conditional on the country, in the order of their logits after the country ones (ADRs 0023, 0024). */
+function subHeads(config: ClassifierConfig): SubHead[] {
+  const heads: SubHead[] = [];
+  if (config.cities !== undefined) heads.push({ name: "city", classes: config.cities, temperature: config.city_temperature, threshold: config.city_threshold });
+  if (config.states !== undefined) heads.push({ name: "state", classes: config.states, temperature: config.state_temperature, threshold: config.state_threshold });
+  return heads;
+}
+
+/** Width of a model's output row: one logit per label, then one per city class, then one per state class. */
+const logitsWidth = (config: ClassifierConfig): number => subHeads(config).reduce((width, head) => width + head.classes.length, config.labels.length);
+
+/** The most probable named class of the `country` among a head's logits, answered when the country is and it reaches the head's threshold. */
+function decideSub(head: SubHead, logits: readonly number[], country: [string, number], answered: boolean): SubAnswer {
+  const group = head.classes.flatMap(([code], index) => (code === country[0] ? [index] : []));
+  const conditional = softmax(group.map(index => logits[index] as number), head.temperature);
+  const named = group
+    .flatMap((index, k): Array<[string, number]> => {
+      const name = head.classes[index]?.[1];
+      return name ? [[name, country[1] * (conditional[k] as number)]] : [];
+    })
+    .sort((a, b) => b[1] - a[1]);
+  const [first] = named;
+  if (first === undefined) return NO_ANSWER;
+  return { value: answered && first[1] >= head.threshold ? first[0] : null, confidence: first[1], top: named.slice(0, 3) };
+}
 
 /**
  * Softmax of `logits / temperature` over the labels; the top label is the answer when its probability reaches
- * `threshold` (default: the config's). With a city head (format 2), the city logits follow: a softmax over the top
- * country's city classes gives P(city | country), and the most probable named city is answered as above (ADR 0023).
+ * `threshold` (default: the config's). With a city head (format 2 or 3) and a state head (format 3), their logits
+ * follow in that order: a softmax over the top country's classes gives P(city | country) or P(state | country), and the
+ * most probable named class is answered as above (ADRs 0023, 0024).
  */
 export function predictFromLogits(logits: ArrayLike<number>, config: ClassifierConfig, threshold: number = config.threshold): CountryPrediction {
   const { labels, temperature } = config;
-  if (logits.length !== logitsWidth(config)) throw new Error(`expected ${logitsWidth(config)} logits (one per label and city), got ${logits.length}`);
+  if (logits.length !== logitsWidth(config)) throw new Error(`expected ${logitsWidth(config)} logits (one per label, city and state class), got ${logits.length}`);
   const values = Array.from(logits);
   const ranked = softmax(values.slice(0, labels.length), temperature).map((p, index): [string, number] => [labels[index] as string, p]).sort((a, b) => b[1] - a[1]);
   const [best] = ranked as [[string, number]];
   const country_code = best[1] >= threshold ? best[0] : null;
-  const prediction = { country_code, confidence: best[1], top: ranked.slice(0, 3) };
-  if (config.format === 1) return { ...prediction, ...NO_CITY };
-
-  const group = config.cities.flatMap(([code], index) => (code === best[0] ? [index] : []));
-  const conditional = softmax(group.map(index => values[labels.length + index] as number), config.city_temperature);
-  const cities = group
-    .flatMap((index, k): Array<[string, number]> => {
-      const name = config.cities[index]?.[1];
-      return name ? [[name, best[1] * (conditional[k] as number)]] : [];
-    })
-    .sort((a, b) => b[1] - a[1]);
-  const [city] = cities;
-  if (city === undefined) return { ...prediction, ...NO_CITY };
-  return { ...prediction, city: country_code !== null && city[1] >= config.city_threshold ? city[0] : null, city_confidence: city[1], city_top: cities.slice(0, 3) };
+  const answers = { city: NO_ANSWER, state: NO_ANSWER };
+  let start = labels.length;
+  for (const head of subHeads(config)) {
+    answers[head.name] = decideSub(head, values.slice(start, start + head.classes.length), best, country_code !== null);
+    start += head.classes.length;
+  }
+  const { city, state } = answers;
+  return {
+    country_code, confidence: best[1], top: ranked.slice(0, 3),
+    city: city.value, city_confidence: city.confidence, city_top: city.top,
+    state: state.value, state_confidence: state.confidence, state_top: state.top,
+  };
 }
 
 /** The part of a tokenizer the classifier needs: ids with the model's special tokens. */
@@ -98,7 +140,7 @@ export function encodeBatch(tokenizer: TokenizerLike, texts: readonly string[], 
   return { inputIds, attentionMask, batchSize: rows.length, sequenceLength };
 }
 
-/** Runs the model on an encoded batch, returning `[batchSize, labels (+ cities)]` logits in row-major order. */
+/** Runs the model on an encoded batch, returning `[batchSize, labels (+ cities) (+ states)]` logits in row-major order. */
 export type RunLogits = (inputIds: BigInt64Array, attentionMask: BigInt64Array, batchSize: number, sequenceLength: number) => Promise<Float32Array>;
 
 /** Classifies a batch of input texts (from `describeCountryInput`), in order. */

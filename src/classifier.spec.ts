@@ -59,7 +59,42 @@ test("predictFromLogits answers the city of the top country with P(country) x P(
   expect(predictFromLogits([0.2, 0.8, 0.5, 0.5].map(Math.log), { ...cityConfig, cities: [["BR", "Recife"], ["BR", null]] }))
     .toMatchObject({ country_code: "US", city: null, city_confidence: null, city_top: [] });
   expect(predictFromLogits([2, 1, 0, -1], config)).toMatchObject({ city: null, city_confidence: null, city_top: [] });
-  expect(() => predictFromLogits([1, 2], cityConfig)).toThrow(/one per label and city/);
+  expect(() => predictFromLogits([1, 2], cityConfig)).toThrow(/expected 7 logits \(one per label, city and state class\)/);
+});
+
+const stateConfig: ClassifierConfig = {
+  ...cityConfig,
+  format: 3,
+  cities: [["BR", "Recife"], ["BR", null]],
+  states: [["BR", "Pernambuco"], ["BR", null], ["US", "Texas"], ["US", null]],
+  state_temperature: 1,
+  state_threshold: 0.6,
+};
+
+test("parseClassifierConfig accepts a state head only in format 3, with or without a city head", () => {
+  expect(parseClassifierConfig(stateConfig)).toEqual(stateConfig);
+  const { cities: _cities, city_temperature: _temperature, city_threshold: _threshold, ...stateOnly } = stateConfig;
+  expect(parseClassifierConfig(stateOnly)).toEqual(stateOnly);
+  expect(() => parseClassifierConfig({ ...stateConfig, format: 2 })).toThrow();
+  expect(() => parseClassifierConfig({ ...cityConfig, format: 3 })).toThrow();
+  expect(() => parseClassifierConfig({ ...config, states: stateConfig.states, state_temperature: 1, state_threshold: 0.6 })).toThrow();
+  expect(() => parseClassifierConfig({ ...stateConfig, states: [["JP", "Tokyo"]] })).toThrow(/states/);
+  expect(() => parseClassifierConfig({ ...stateOnly, cities: stateConfig.cities })).toThrow();
+});
+
+test("predictFromLogits answers the state of the top country from the logits after the city ones", () => {
+  // P(BR) = 0.8; P(Recife | BR) = 0.5; P(Pernambuco | BR) = 0.9; the US state logits are ignored.
+  const logits = [0.8, 0.2, 0.5, 0.5, 0.9, 0.1, 100, 100].map(Math.log);
+  const prediction = predictFromLogits(logits, stateConfig);
+  expect(prediction).toMatchObject({ country_code: "BR", city: "Recife", state: "Pernambuco" });
+  expect(prediction.city_confidence).toBeCloseTo(0.4, 10);
+  expect(prediction.state_confidence).toBeCloseTo(0.72, 10);
+  expect(prediction.state_top.map(([name]) => name)).toEqual(["Pernambuco"]);
+  expect(predictFromLogits(logits, { ...stateConfig, state_threshold: 0.73 }).state).toBeNull();
+  expect(predictFromLogits(logits, stateConfig, 0.9)).toMatchObject({ country_code: null, state: null });
+  // A city-only model answers no state.
+  expect(predictFromLogits([0.8, 0.2, 0.5, 0.3, 0.2, 100, 100].map(Math.log), cityConfig)).toMatchObject({ state: null, state_confidence: null, state_top: [] });
+  expect(() => predictFromLogits(logits.slice(0, 6), stateConfig)).toThrow(/expected 8 logits/);
 });
 
 test("predictFromLogits applies the temperature, the threshold and reports the top three", () => {
@@ -107,7 +142,7 @@ test("createCountryClassifier answers empty texts without the model and keeps th
   expect(run).toHaveBeenCalledTimes(1);
   expect(run.mock.calls[0]?.[2]).toBe(2);
   expect(await classify(["", " "])).toEqual([EMPTY_PREDICTION, EMPTY_PREDICTION]);
-  expect(EMPTY_PREDICTION).toEqual({ country_code: null, confidence: null, top: [], city: null, city_confidence: null, city_top: [] });
+  expect(EMPTY_PREDICTION).toEqual({ country_code: null, confidence: null, top: [], city: null, city_confidence: null, city_top: [], state: null, state_confidence: null, state_top: [] });
   expect(run).toHaveBeenCalledTimes(1);
 });
 

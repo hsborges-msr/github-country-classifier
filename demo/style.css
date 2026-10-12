@@ -331,6 +331,12 @@ main {
   color: var(--muted);
 }
 
+.users .place {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 .users .indeterminate {
   color: var(--muted);
   font-style: italic;

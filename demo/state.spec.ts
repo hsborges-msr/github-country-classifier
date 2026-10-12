@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { addActivity, countryOf, describeActivity, newActors, nextProfileLimit, summarize, tallyCountries, type ActorResult } from "./state.js";
+import { addActivity, countryOf, describeActivity, newActors, nextProfileLimit, placeOf, summarize, tallyCountries, type ActorResult } from "./state.js";
 
 const event = (login: string, type: string | null = "PushEvent", id = `${login}-${type}`) => ({ id, type, actor: { login, avatar_url: `https://a/${login}` } });
 
@@ -52,13 +52,27 @@ const result = (login: string, top: Array<[string, number]>): ActorResult => ({
   avatarUrl: "",
   htmlUrl: "",
   text: top.length ? "bio: x" : "",
-  prediction: { country_code: top[0]?.[0] ?? null, confidence: top[0]?.[1] ?? null, top, city: null, city_confidence: null, city_top: [] },
+  prediction: { country_code: top[0]?.[0] ?? null, confidence: top[0]?.[1] ?? null, top, city: null, city_confidence: null, city_top: [], state: null, state_confidence: null, state_top: [] },
 });
 
 test("countryOf answers the top label only when it reaches the minimum confidence", () => {
   expect(countryOf(result("a", [["BR", 0.8]]), 0.5)).toBe("BR");
   expect(countryOf(result("a", [["BR", 0.4]]), 0.5)).toBeNull();
   expect(countryOf(result("a", []), 0)).toBeNull();
+});
+
+test("placeOf names the answered city and state of a placed country, once when they are the same", () => {
+  const placed = (city: string | null, state: string | null) => {
+    const base = result("a", [["BR", 0.99]]);
+    return { ...base, prediction: { ...base.prediction, city, state } };
+  };
+  expect(placeOf(placed("Recife", "Pernambuco"), 0.5)).toBe("Recife, Pernambuco");
+  expect(placeOf(placed("Tokyo", "Tokyo"), 0.5)).toBe("Tokyo");
+  expect(placeOf(placed(null, "Pernambuco"), 0.5)).toBe("Pernambuco");
+  expect(placeOf(placed("Recife", null), 0.5)).toBe("Recife");
+  expect(placeOf(placed(null, null), 0.5)).toBeNull();
+  // Below the minimum confidence the country is indeterminate, so its city and state are not shown either.
+  expect(placeOf(placed("Recife", "Pernambuco"), 0.995)).toBeNull();
 });
 
 test("summarize counts users, placed users, countries and their events at a minimum confidence", () => {

@@ -82,6 +82,16 @@ export function countryOf(result: ActorResult, minConfidence: number): string | 
   return best !== undefined && best[1] >= minConfidence ? best[0] : null;
 }
 
+/**
+ * "City, State" as the model answered them (each at its own calibrated threshold), one name when they are the same
+ * (Tokyo) or only one is answered; null when neither is, or the country itself is below `minConfidence`.
+ */
+export function placeOf(result: ActorResult, minConfidence: number): string | null {
+  if (countryOf(result, minConfidence) === null) return null;
+  const names = [...new Set([result.prediction.city, result.prediction.state])].filter(name => name !== null);
+  return names.length ? names.join(", ") : null;
+}
+
 export interface Summary {
   /** Classified users, and the events seen from them. */
   users: number;
