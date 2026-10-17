@@ -21,7 +21,6 @@
     "AL",
     "AM",
     "AO",
-    "AQ",
     "AR",
     "AS",
     "AT",
@@ -254,14 +253,15 @@
     "WF",
     "WS",
     "XK",
+    "XX",
     "YE",
     "YT",
     "ZA",
     "ZM",
     "ZW"
   ],
-  "temperature": 1.032627,
-  "threshold": 0.94,
+  "temperature": 1.047869,
+  "threshold": 0.954,
   "target_precision": 0.95,
   "cities": [
     [
@@ -4857,8 +4857,8 @@
       null
     ]
   ],
-  "city_temperature": 1.039704,
-  "city_threshold": 0.994,
+  "city_temperature": 1.048132,
+  "city_threshold": 0.998,
   "states": [
     [
       "AE",
@@ -8173,8 +8173,8 @@
       null
     ]
   ],
-  "state_temperature": 1.053795,
-  "state_threshold": 0.997,
+  "state_temperature": 1.061818,
+  "state_threshold": 0.999,
   "vocabulary": {
     "kept": 74332,
     "of": 250037,
