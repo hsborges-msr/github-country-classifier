@@ -77,7 +77,8 @@ function showProgress(progress: LoadProgress) {
   ui.modelStatus.textContent = `Loading model… ${(loaded / 2 ** 20).toFixed(0)} / ${(total / 2 ** 20).toFixed(0)} MB`;
 }
 
-const classifierPromise = loadCountryClassifier(MODEL_URL, { onnxFile: ONNX_FILE, onProgress: showProgress }).then(
+// The dev server's model URLs have no content hash, so a cached copy would hide a re-exported (or deleted) model.
+const classifierPromise = loadCountryClassifier(MODEL_URL, { onnxFile: ONNX_FILE, onProgress: showProgress, cache: import.meta.env.DEV ? false : undefined }).then(
   classifier => {
     ui.modelProgress.hidden = true;
     ui.modelStatus.textContent = `Model ready · ${classifier.config.labels.length} countries · ${MODEL_NAME}`;
