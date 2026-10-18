@@ -260,8 +260,8 @@
     "ZM",
     "ZW"
   ],
-  "temperature": 1.047869,
-  "threshold": 0.954,
+  "temperature": 1.062545,
+  "threshold": 0.88,
   "target_precision": 0.95,
   "cities": [
     [
@@ -419,10 +419,6 @@
     [
       "AU",
       "Sydney"
-    ],
-    [
-      "AU",
-      "Virginia"
     ],
     [
       "AU",
@@ -1002,10 +998,6 @@
     ],
     [
       "CA",
-      "Area D (Cowichan Bay)"
-    ],
-    [
-      "CA",
       "Brampton"
     ],
     [
@@ -1386,10 +1378,6 @@
     ],
     [
       "CY",
-      "Mansoura"
-    ],
-    [
-      "CY",
       "Nicosia"
     ],
     [
@@ -1695,10 +1683,6 @@
     [
       "EG",
       "Giza"
-    ],
-    [
-      "EG",
-      "Kafr Al Mansoura"
     ],
     [
       "EG",
@@ -4378,10 +4362,6 @@
     ],
     [
       "US",
-      "Location"
-    ],
-    [
-      "US",
       "Long Beach"
     ],
     [
@@ -4443,10 +4423,6 @@
     [
       "US",
       "Nashville"
-    ],
-    [
-      "US",
-      "New England"
     ],
     [
       "US",
@@ -4778,10 +4754,6 @@
     ],
     [
       "VE",
-      "Russian"
-    ],
-    [
-      "VE",
       null
     ],
     [
@@ -4857,8 +4829,8 @@
       null
     ]
   ],
-  "city_temperature": 1.048132,
-  "city_threshold": 0.998,
+  "city_temperature": 1.012475,
+  "city_threshold": 0.957,
   "states": [
     [
       "AE",
@@ -5039,10 +5011,6 @@
     [
       "AU",
       "Victoria"
-    ],
-    [
-      "AU",
-      "Virginia"
     ],
     [
       "AU",
@@ -5895,6 +5863,10 @@
     [
       "EG",
       "Cairo"
+    ],
+    [
+      "EG",
+      "Dakahlia Governorate"
     ],
     [
       "EG",
@@ -8086,10 +8058,6 @@
     ],
     [
       "VE",
-      "Sucre State"
-    ],
-    [
-      "VE",
       "Zulia State"
     ],
     [
@@ -8173,8 +8141,8 @@
       null
     ]
   ],
-  "state_temperature": 1.061818,
-  "state_threshold": 0.999,
+  "state_temperature": 1.048611,
+  "state_threshold": 0.968,
   "vocabulary": {
     "kept": 74332,
     "of": 250037,
