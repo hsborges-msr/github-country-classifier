@@ -3,7 +3,7 @@ import { describeCountryInput, loadCountryClassifier, type LoadProgress } from "
 import { forEachConcurrently } from "./concurrency.js";
 import { createGitHubClient, RateLimitError, type RateLimit } from "./github.js";
 import { createWorldMap, type WorldMap } from "./map.js";
-import { addActivity, countryOf, describeActivity, newActors, nextProfileLimit, placeOf, PROFILE_LIMIT, summarize, tallyCountries, type ActivityState, type ActorResult } from "./state.js";
+import { addActivity, countryOf, describeActivity, newActors, EVENT_LIMIT, nextEventLimit, placeOf, summarize, tallyCountries, type ActivityState, type ActorResult } from "./state.js";
 
 // The bundled model by default; `?model=<url>` points at another exported model directory, `?onnx=model.onnx` picks its fp32 file.
 const params = new URLSearchParams(location.search);
@@ -191,15 +191,15 @@ async function refresh() {
   if (token) sessionStorage.setItem(TOKEN_KEY, token);
   else sessionStorage.removeItem(TOKEN_KEY);
   const github = createGitHubClient({ token, onRateLimit: showRateLimit });
-  const limit = Math.min(PROFILE_LIMIT.token, Math.max(1, Number(ui.limit.value) || PROFILE_LIMIT.anonymous));
+  const limit = Math.min(EVENT_LIMIT.token, Math.max(1, Number(ui.limit.value) || EVENT_LIMIT.anonymous));
   let added = 0;
   try {
     ui.runStatus.textContent = "Fetching the latest public events…";
-    const events = await github.listPublicEvents();
+    const events = await github.listPublicEvents(limit);
     // Counting costs no API call, so users classified earlier get their new events too.
     activityState = addActivity(activityState, events);
     render();
-    const actors = newActors(events, known, limit);
+    const actors = newActors(events, known);
     if (actors.length === 0) {
       ui.runStatus.textContent = `No new actors among the latest ${events.length} events; GitHub refreshes them every few minutes.`;
       return;
@@ -233,7 +233,7 @@ async function refresh() {
 }
 
 const followToken = () => {
-  ui.limit.value = String(nextProfileLimit(Number(ui.limit.value), ui.token.value.trim() !== ""));
+  ui.limit.value = String(nextEventLimit(Number(ui.limit.value), ui.token.value.trim() !== ""));
 };
 ui.token.value = sessionStorage.getItem(TOKEN_KEY) ?? "";
 followToken();

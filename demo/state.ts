@@ -18,14 +18,17 @@ export interface ActivityState {
   seenEventIds: ReadonlySet<string>;
 }
 
-/** Profiles per refresh: anonymous requests are limited to 60 per hour; with a token (5,000 per hour) every actor of the 300 events GitHub keeps. */
-export const PROFILE_LIMIT = { anonymous: 20, token: 300 } as const;
+/**
+ * Events per refresh, each new actor costing one profile request: anonymous requests are limited to 60 per hour; with a
+ * token (5,000 per hour) all 300 events GitHub keeps.
+ */
+export const EVENT_LIMIT = { anonymous: 30, token: 300 } as const;
 
-/** The profile limit after a token is entered or removed; a number the user picked (not a default) is kept. */
-export function nextProfileLimit(current: number, hasToken: boolean): number {
-  const isDefault = current === PROFILE_LIMIT.anonymous || current === PROFILE_LIMIT.token;
+/** The event limit after a token is entered or removed; a number the user picked (not a default) is kept. */
+export function nextEventLimit(current: number, hasToken: boolean): number {
+  const isDefault = current === EVENT_LIMIT.anonymous || current === EVENT_LIMIT.token;
   if (!isDefault) return current;
-  return hasToken ? PROFILE_LIMIT.token : PROFILE_LIMIT.anonymous;
+  return hasToken ? EVENT_LIMIT.token : EVENT_LIMIT.anonymous;
 }
 
 const isBot = (login: string) => login.endsWith("[bot]");
@@ -63,12 +66,11 @@ export interface ActorResult extends Actor {
   prediction: CountryPrediction;
 }
 
-/** Each actor not in `known`, in the order of their newest event as GitHub lists them, without bots, at most `limit`. */
-export function newActors(events: readonly EventLike[], known: ReadonlySet<string>, limit: number): Actor[] {
+/** Each actor not in `known`, in the order of their newest event as GitHub lists them, without bots. */
+export function newActors(events: readonly EventLike[], known: ReadonlySet<string>): Actor[] {
   const seen = new Set(known);
   const actors: Actor[] = [];
   for (const { actor } of events) {
-    if (actors.length >= limit) break;
     if (seen.has(actor.login) || isBot(actor.login)) continue;
     seen.add(actor.login);
     actors.push({ login: actor.login, avatarUrl: actor.avatar_url });

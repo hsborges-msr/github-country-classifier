@@ -1,25 +1,23 @@
 import { expect, test } from "vitest";
-import { addActivity, countryOf, describeActivity, newActors, nextProfileLimit, placeOf, summarize, tallyCountries, type ActorResult } from "./state.js";
+import { addActivity, countryOf, describeActivity, newActors, nextEventLimit, placeOf, summarize, tallyCountries, type ActorResult } from "./state.js";
 
 const event = (login: string, type: string | null = "PushEvent", id = `${login}-${type}`) => ({ id, type, actor: { login, avatar_url: `https://a/${login}` } });
 
-test("newActors keeps each unseen human actor once, in order, up to the limit", () => {
+test("newActors keeps each unseen human actor once, in order", () => {
   const events = [event("ana"), event("dependabot[bot]"), event("bo", "IssuesEvent"), event("ana", "WatchEvent"), event("cy"), event("di")];
-  expect(newActors(events, new Set(["cy"]), 10)).toEqual([
+  expect(newActors(events, new Set(["cy"]))).toEqual([
     { login: "ana", avatarUrl: "https://a/ana" },
     { login: "bo", avatarUrl: "https://a/bo" },
     { login: "di", avatarUrl: "https://a/di" },
   ]);
-  expect(newActors(events, new Set(), 2).map(actor => actor.login)).toEqual(["ana", "bo"]);
-  expect(newActors(events, new Set(), 0)).toEqual([]);
 });
 
-test("nextProfileLimit follows the token unless the user picked another number", () => {
-  expect(nextProfileLimit(20, true)).toBe(300);
-  expect(nextProfileLimit(300, false)).toBe(20);
-  expect(nextProfileLimit(300, true)).toBe(300);
-  expect(nextProfileLimit(35, true)).toBe(35);
-  expect(nextProfileLimit(35, false)).toBe(35);
+test("nextEventLimit follows the token unless the user picked another number", () => {
+  expect(nextEventLimit(30, true)).toBe(300);
+  expect(nextEventLimit(300, false)).toBe(30);
+  expect(nextEventLimit(300, true)).toBe(300);
+  expect(nextEventLimit(35, true)).toBe(35);
+  expect(nextEventLimit(35, false)).toBe(35);
 });
 
 test("addActivity counts each new event once per actor and type, skipping bots, without changing its inputs", () => {
