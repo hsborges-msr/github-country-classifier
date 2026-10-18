@@ -45,6 +45,22 @@ test("transient failures are retried; other errors are thrown", async () => {
   await expect(createGitHubClient({ fetch: fakeFetch(json({ message: "Bad credentials" }, 401)) }).getUser("ana")).rejects.toMatchObject({ status: 401 });
 });
 
+test("listPublicEvents follows the next-page links up to the limit", async () => {
+  const page = (from: number, count: number) => Array.from({ length: count }, (_, i) => ({ id: String(from + i), type: "PushEvent", actor: { login: `u${from + i}`, avatar_url: "https://a/u" } }));
+  const next = (n: number) => ({ ...quota(59), link: `<https://api.github.com/events?per_page=100&page=${n}>; rel="next", <https://api.github.com/events?per_page=100&page=3>; rel="last"` });
+  const fetch = fakeFetch(json(page(0, 100), 200, next(2)), json(page(100, 100), 200, next(3)), json(page(200, 100)));
+  const events = await createGitHubClient({ fetch }).listPublicEvents();
+  expect(events.map(event => event.id)).toEqual(page(0, 300).map(event => event.id));
+  expect(fetch.mock.calls.map(([url]) => String(url))).toEqual([
+    "https://api.github.com/events?per_page=100",
+    "https://api.github.com/events?per_page=100&page=2",
+    "https://api.github.com/events?per_page=100&page=3",
+  ]);
+  const limited = fakeFetch(json(page(0, 100), 200, next(2)), json(page(100, 100), 200, next(3)));
+  expect(await createGitHubClient({ fetch: limited }).listPublicEvents(150)).toHaveLength(150);
+  expect(limited).toHaveBeenCalledTimes(2);
+});
+
 test("an aborted signal cancels the request", async () => {
   const controller = new AbortController();
   controller.abort(new Error("stop"));

@@ -15,9 +15,9 @@ test("newActors keeps each unseen human actor once, in order, up to the limit", 
 });
 
 test("nextProfileLimit follows the token unless the user picked another number", () => {
-  expect(nextProfileLimit(20, true)).toBe(100);
-  expect(nextProfileLimit(100, false)).toBe(20);
-  expect(nextProfileLimit(100, true)).toBe(100);
+  expect(nextProfileLimit(20, true)).toBe(300);
+  expect(nextProfileLimit(300, false)).toBe(20);
+  expect(nextProfileLimit(300, true)).toBe(300);
   expect(nextProfileLimit(35, true)).toBe(35);
   expect(nextProfileLimit(35, false)).toBe(35);
 });

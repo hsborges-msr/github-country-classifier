@@ -18,8 +18,8 @@ export interface ActivityState {
   seenEventIds: ReadonlySet<string>;
 }
 
-/** Profiles per refresh: anonymous requests are limited to 60 per hour; with a token (5,000 per hour) a whole events page. */
-export const PROFILE_LIMIT = { anonymous: 20, token: 100 } as const;
+/** Profiles per refresh: anonymous requests are limited to 60 per hour; with a token (5,000 per hour) every actor of the 300 events GitHub keeps. */
+export const PROFILE_LIMIT = { anonymous: 20, token: 300 } as const;
 
 /** The profile limit after a token is entered or removed; a number the user picked (not a default) is kept. */
 export function nextProfileLimit(current: number, hasToken: boolean): number {

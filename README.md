@@ -287,8 +287,9 @@ tarball) reads the latest [public GitHub events](https://docs.github.com/rest/ac
 fetches each author's profile, classifies it in the browser and maps the result, with a refresh button, a
 minimum-confidence slider, event counts per user, and totals for all users and at the chosen confidence.
 
-- Without a token GitHub allows 60 requests per hour (one per event list, one per profile), so a refresh classifies 20
-  profiles; with a token (kept in `sessionStorage`) it classifies a whole page of 100 events.
+- Each refresh reads the 300 latest events GitHub keeps (three pages of 100). Without a token GitHub allows 60 requests
+  per hour (one per events page, one per profile), so a refresh classifies 20 profiles; with a token (kept in
+  `sessionStorage`) it classifies up to 300, every actor of those events.
 - Profiles are fetched six at a time through Octokit with throttling and retries; an exhausted quota stops the refresh
   at once instead of waiting up to an hour, and the next refresh picks up where it stopped.
 - GitHub Pages cannot send cross-origin isolation headers, so the hosted demo runs on one thread; locally, `yarn demo`

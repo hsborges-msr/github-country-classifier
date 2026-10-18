@@ -8,6 +8,8 @@ const GitHub = Octokit.plugin(throttling, retry);
 const API_VERSION = "2026-03-10";
 /** Longest secondary-limit pause the page waits out (seconds); primary limits last up to an hour and are never waited out. */
 const MAX_SECONDARY_WAIT = 60;
+/** GitHub keeps only the latest 300 public events (three pages of 100). */
+export const MAX_EVENTS = 300;
 
 const eventSchema = z.object({
   id: z.string(),
@@ -101,11 +103,17 @@ export function createGitHubClient(options: {
   });
 
   return {
-    /** The latest public events (GET /events), newest first. */
-    async listPublicEvents(perPage = 100): Promise<GitHubEvent[]> {
+    /** The latest public events (GET /events), newest first: up to `limit`, 100 per page, following the `link` header. */
+    async listPublicEvents(limit = MAX_EVENTS): Promise<GitHubEvent[]> {
+      const events: GitHubEvent[] = [];
+      let url: string | undefined = `/events?per_page=${Math.min(limit, 100)}`;
       try {
-        const response = await octokit.request("GET /events", { per_page: perPage });
-        return z.array(eventSchema).parse(response.data);
+        while (url !== undefined && events.length < limit) {
+          const response: { data: unknown; headers: Headers } = await octokit.request(`GET ${url}`);
+          events.push(...z.array(eventSchema).parse(response.data));
+          url = /<([^>]+)>;\s*rel="next"/u.exec(String(response.headers.link ?? ""))?.[1];
+        }
+        return events.slice(0, limit);
       } catch (error) {
         throw asRateLimitError(error) ?? error;
       }
